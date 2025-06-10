@@ -1,4 +1,10 @@
 {
   "name": "BusinessEKYCApp",
-  "displayName": "BusinessEKYCApp"
+  "displayName": "BusinessEKYCApp",
+  "expo": {
+    "platforms": ["web", "android", "ios"],
+    "web": {
+       "bundler": "metro"
+    }
+  }
 }
