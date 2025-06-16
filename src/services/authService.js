@@ -1,3 +1,4 @@
+// src/services/authService.js - FIXED OTP functions to use apiService
 import { apiService } from './api';
 import { storageService } from './storageService';
 
@@ -49,6 +50,59 @@ class AuthService {
         success: false, 
         message: error.message || 'Registration failed' 
       };
+    }
+  }
+
+  // ✅ FIXED: WhatsApp OTP using apiService
+  async sendWhatsAppOTP(phoneNumber) {
+    try {
+      console.log('📱 Sending WhatsApp OTP to:', phoneNumber);
+      
+      const response = await apiService.client.post('/api/auth/send-whatsapp-otp', {
+        phoneNumber
+      });
+      
+      console.log('✅ WhatsApp OTP response:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ WhatsApp OTP error:', error);
+      throw error;
+    }
+  }
+
+  // ✅ FIXED: SMS OTP using apiService
+  async sendSMSOTP(phoneNumber) {
+    try {
+      console.log('📱 Sending SMS OTP to:', phoneNumber);
+      
+      const response = await apiService.client.post('/api/auth/send-sms-otp', {
+        phoneNumber
+      });
+      
+      console.log('✅ SMS OTP response:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ SMS OTP error:', error);
+      throw error;
+    }
+  }
+
+  // ✅ FIXED: OTP verification using apiService
+  async verifyOTP(phoneNumber, otp, method = 'sms') {
+    try {
+      console.log('🔐 Verifying OTP:', { phoneNumber, otp: '***', method });
+      
+      const response = await apiService.client.post('/api/auth/verify-otp', {
+        phoneNumber,
+        otp,
+        method
+      });
+      
+      console.log('✅ OTP verification response:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ OTP verification error:', error);
+      throw error;
     }
   }
 
@@ -130,4 +184,10 @@ class AuthService {
 }
 
 export const authService = new AuthService();
+
+// ✅ Export individual OTP functions for easy import
+export const sendSMSOTP = (phoneNumber) => authService.sendSMSOTP(phoneNumber);
+export const sendWhatsAppOTP = (phoneNumber) => authService.sendWhatsAppOTP(phoneNumber);
+export const verifyOTP = (phoneNumber, otp, method) => authService.verifyOTP(phoneNumber, otp, method);
+
 export default authService;

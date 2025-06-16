@@ -10,6 +10,7 @@ import NFCVerificationScreen from '../screens/kyc/NFCVerificationScreen';
 import PhoneVerificationScreen from '../screens/kyc/PhoneVerificationScreen';
 import KYCCompletedScreen from '../screens/kyc/KYCCompletedScreen';
 
+
 const Stack = createStackNavigator();
 
 const KYCNavigator = () => {

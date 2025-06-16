@@ -6,16 +6,15 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  StatusBar,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useAuth } from '../../context/AuthContext';
 import { useKYC } from '../../context/KYCContext';
-import ProgressBar from '../../components/common/ProgressBar';
-import Button from '../../components/common/Button';
-import { colors } from '../../styles/colors';
-import { typography } from '../../styles/typography';
-import { spacing } from '../../styles/spacing';
+
+const { width } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }) => {
   const { user } = useAuth();
@@ -54,53 +53,89 @@ const HomeScreen = ({ navigation }) => {
   const renderProfileCard = () => (
     <View style={styles.profileCard}>
       <View style={styles.profileHeader}>
-        <View>
+        <View style={styles.greetingContainer}>
           <Text style={styles.greeting}>
             {getGreeting()} {user?.firstName},
           </Text>
           <Text style={styles.subtitle}>prêt à booster votre activité ?</Text>
         </View>
-        <TouchableOpacity onPress={navigateToProfile}>
-          <Icon name="person" size={32} color={colors.primary} />
+        <TouchableOpacity 
+          style={styles.profileButton}
+          onPress={navigateToProfile}
+        >
+          <Icon name="person" size={32} color="#67e8f9" />
         </TouchableOpacity>
       </View>
 
-      {user?.profileCompletion < 100 && (
+      {(user?.profileCompletion || 0) < 100 && (
         <View style={styles.profileCompletion}>
           <Text style={styles.completionTitle}>
             Votre profil est incomplet.
           </Text>
-          <ProgressBar
-            progress={user?.profileCompletion || 0}
-            showPercentage={true}
-            style={styles.progressBar}
-          />
-          <View style={styles.completionSteps}>
-            <Text style={[
-              styles.stepText,
-              user?.isEmailVerified && styles.completedStep
-            ]}>
-              ✓ Vérification de votre adresse e-mail
-            </Text>
-            <Text style={[
-              styles.stepText,
-              user?.isPhoneVerified && styles.completedStep
-            ]}>
-              ✓ Vérification de votre numéro de téléphone
-            </Text>
-            <Text style={[
-              styles.stepText,
-              user?.businessInfo?.companyName && styles.completedStep
-            ]}>
-              ✓ Informations sur votre entreprise
-            </Text>
+          
+          <View style={styles.progressContainer}>
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { width: `${user?.profileCompletion || 0}%` }
+                ]} 
+              />
+            </View>
+            <Text style={styles.progressText}>{user?.profileCompletion || 0}%</Text>
           </View>
-          <Button
-            title="Compléter mes informations"
-            onPress={navigateToProfile}
-            size="small"
+          
+          <View style={styles.completionSteps}>
+            <View style={styles.stepItem}>
+              <Icon 
+                name={user?.isEmailVerified ? "check-circle" : "radio-button-unchecked"} 
+                size={16} 
+                color={user?.isEmailVerified ? "#10b981" : "#64748b"} 
+              />
+              <Text style={[
+                styles.stepText,
+                user?.isEmailVerified && styles.completedStep
+              ]}>
+                Vérification de votre adresse e-mail
+              </Text>
+            </View>
+            
+            <View style={styles.stepItem}>
+              <Icon 
+                name={user?.isPhoneVerified ? "check-circle" : "radio-button-unchecked"} 
+                size={16} 
+                color={user?.isPhoneVerified ? "#10b981" : "#64748b"} 
+              />
+              <Text style={[
+                styles.stepText,
+                user?.isPhoneVerified && styles.completedStep
+              ]}>
+                Vérification de votre numéro de téléphone
+              </Text>
+            </View>
+            
+            <View style={styles.stepItem}>
+              <Icon 
+                name={user?.businessInfo?.companyName ? "check-circle" : "radio-button-unchecked"} 
+                size={16} 
+                color={user?.businessInfo?.companyName ? "#10b981" : "#64748b"} 
+              />
+              <Text style={[
+                styles.stepText,
+                user?.businessInfo?.companyName && styles.completedStep
+              ]}>
+                Informations sur votre entreprise
+              </Text>
+            </View>
+          </View>
+          
+          <TouchableOpacity
             style={styles.completeButton}
-          />
+            onPress={navigateToProfile}
+          >
+            <Icon name="edit" size={16} color="#fff" />
+            <Text style={styles.completeButtonText}>Compléter mes informations</Text>
+          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -108,192 +143,341 @@ const HomeScreen = ({ navigation }) => {
 
   const renderApplicationCard = () => (
     <View style={styles.applicationCard}>
-      <Text style={styles.cardTitle}>Mes demandes</Text>
+      <View style={styles.cardHeader}>
+        <Icon name="description" size={24} color="#67e8f9" />
+        <Text style={styles.cardTitle}>Mes demandes</Text>
+      </View>
       
       <View style={styles.applicationStatus}>
         <Text style={styles.applicationText}>
           Vous avez 1 demande de crédit en cours.
         </Text>
-        <ProgressBar
-          progress={90}
-          showPercentage={true}
-          style={styles.applicationProgress}
-        />
         
-        <View style={styles.applicationSteps}>
-          <Text style={[styles.stepText, styles.completedStep]}>
-            ✓ Connexion avec votre banque
-          </Text>
-          <Text style={[styles.stepText, styles.completedStep]}>
-            ✓ Analyse de vos données financières
-          </Text>
-          <Text style={[styles.stepText, styles.completedStep]}>
-            ✓ Vérification de votre identité (KYC)
-          </Text>
-          <Text style={styles.stepText}>
-            ○ Ajout de documents additionnels
-          </Text>
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBar}>
+            <View style={[styles.progressFill, { width: '90%' }]} />
+          </View>
+          <Text style={styles.progressText}>90%</Text>
         </View>
         
-        <Button
-          title="Poursuivre la demande"
-          onPress={navigateToCreditApplication}
+        <View style={styles.applicationSteps}>
+          <View style={styles.stepItem}>
+            <Icon name="check-circle" size={16} color="#10b981" />
+            <Text style={[styles.stepText, styles.completedStep]}>
+              Connexion avec votre banque
+            </Text>
+          </View>
+          
+          <View style={styles.stepItem}>
+            <Icon name="check-circle" size={16} color="#10b981" />
+            <Text style={[styles.stepText, styles.completedStep]}>
+              Analyse de vos données financières
+            </Text>
+          </View>
+          
+          <View style={styles.stepItem}>
+            <Icon name="check-circle" size={16} color="#10b981" />
+            <Text style={[styles.stepText, styles.completedStep]}>
+              Vérification de votre identité (KYC)
+            </Text>
+          </View>
+          
+          <View style={styles.stepItem}>
+            <Icon name="radio-button-unchecked" size={16} color="#64748b" />
+            <Text style={styles.stepText}>
+              Ajout de documents additionnels
+            </Text>
+          </View>
+        </View>
+        
+        <TouchableOpacity
           style={styles.continueButton}
-        />
+          onPress={navigateToCreditApplication}
+        >
+          <Icon name="play-arrow" size={20} color="#fff" />
+          <Text style={styles.continueButtonText}>Poursuivre la demande</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 
   const renderQuickActions = () => (
     <View style={styles.quickActions}>
-      <TouchableOpacity
-        style={styles.actionButton}
-        onPress={navigateToKYC}
-      >
-        <Icon name="verified-user" size={24} color={colors.primary} />
-        <Text style={styles.actionText}>Vérification KYC</Text>
-      </TouchableOpacity>
+      <Text style={styles.sectionTitle}>Actions rapides</Text>
       
-      <TouchableOpacity
-        style={styles.actionButton}
-        onPress={navigateToCreditApplication}
-      >
-        <Icon name="account-balance" size={24} color={colors.primary} />
-        <Text style={styles.actionText}>Demande de crédit</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity
-        style={styles.actionButton}
-        onPress={() => navigation.navigate('Support')}
-      >
-        <Icon name="help" size={24} color={colors.primary} />
-        <Text style={styles.actionText}>Support</Text>
-      </TouchableOpacity>
+      <View style={styles.actionsGrid}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={navigateToKYC}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: 'rgba(103,232,249,0.2)' }]}>
+            <Icon name="verified-user" size={24} color="#67e8f9" />
+          </View>
+          <Text style={styles.actionText}>Vérification KYC</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={navigateToCreditApplication}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: 'rgba(16,185,129,0.2)' }]}>
+            <Icon name="account-balance" size={24} color="#10b981" />
+          </View>
+          <Text style={styles.actionText}>Demande de crédit</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => navigation.navigate('DocumentUpload')}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: 'rgba(14,165,233,0.2)' }]}>
+            <Icon name="cloud-upload" size={24} color="#0ea5e9" />
+          </View>
+          <Text style={styles.actionText}>Documents</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => navigation.navigate('Support')}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: 'rgba(251,191,36,0.2)' }]}>
+            <Icon name="help" size={24} color="#fbbf24" />
+          </View>
+          <Text style={styles.actionText}>Support</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {renderProfileCard()}
-        {renderApplicationCard()}
-        {renderQuickActions()}
-      </ScrollView>
-    </SafeAreaView>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#1e293b" />
+      
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          style={styles.content}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh}
+              tintColor="#67e8f9"
+              colors={['#67e8f9']}
+            />
+          }
+        >
+          {renderProfileCard()}
+          {renderApplicationCard()}
+          {renderQuickActions()}
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: '#0f172a',
+  },
+  safeArea: {
+    flex: 1,
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: 15,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 15,
   },
   profileCard: {
-    backgroundColor: colors.white,
-    borderRadius: spacing.borderRadius.lg,
-    padding: spacing.lg,
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
+    backgroundColor: '#1e293b',
+    borderRadius: 12,
+    padding: 20,
+    marginTop: 15,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#334155',
   },
   profileHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: 15,
+  },
+  greetingContainer: {
+    flex: 1,
   },
   greeting: {
-    fontSize: typography.fontSize.xl,
-    fontWeight: typography.fontWeight.semibold,
-    color: colors.textDark,
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#fff',
   },
   subtitle: {
-    fontSize: typography.fontSize.base,
-    color: colors.gray,
-    marginTop: spacing.xs,
+    fontSize: 16,
+    color: '#94a3b8',
+    marginTop: 4,
+  },
+  profileButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(103,232,249,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(103,232,249,0.3)',
   },
   profileCompletion: {
     borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: spacing.md,
+    borderTopColor: '#334155',
+    paddingTop: 15,
   },
   completionTitle: {
-    fontSize: typography.fontSize.base,
-    fontWeight: typography.fontWeight.medium,
-    color: colors.textDark,
-    marginBottom: spacing.sm,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#fff',
+    marginBottom: 12,
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
   },
   progressBar: {
-    marginBottom: spacing.md,
+    flex: 1,
+    height: 8,
+    backgroundColor: '#334155',
+    borderRadius: 4,
+    marginRight: 12,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#0ea5e9',
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 14,
+    color: '#67e8f9',
+    fontWeight: '600',
+    minWidth: 35,
   },
   completionSteps: {
-    marginBottom: spacing.md,
+    marginBottom: 15,
+  },
+  stepItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   stepText: {
-    fontSize: typography.fontSize.sm,
-    color: colors.gray,
-    marginBottom: spacing.xs,
+    fontSize: 14,
+    color: '#94a3b8',
+    marginLeft: 8,
   },
   completedStep: {
-    color: colors.success,
+    color: '#10b981',
   },
   completeButton: {
+    backgroundColor: '#0ea5e9',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: 'rgba(14,165,233,0.3)',
+  },
+  completeButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 5,
   },
   applicationCard: {
-    backgroundColor: colors.secondary,
-    borderRadius: spacing.borderRadius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
+    backgroundColor: '#1e293b',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
   },
   cardTitle: {
-    fontSize: typography.fontSize.lg,
-    fontWeight: typography.fontWeight.semibold,
-    color: colors.white,
-    marginBottom: spacing.md,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+    marginLeft: 10,
   },
   applicationStatus: {
     // Application status styles
   },
   applicationText: {
-    fontSize: typography.fontSize.base,
-    color: colors.white,
-    marginBottom: spacing.md,
-  },
-  applicationProgress: {
-    marginBottom: spacing.md,
+    fontSize: 16,
+    color: '#cbd5e1',
+    marginBottom: 15,
   },
   applicationSteps: {
-    marginBottom: spacing.md,
+    marginBottom: 15,
   },
   continueButton: {
-    backgroundColor: colors.white,
+    backgroundColor: '#10b981',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(16,185,129,0.3)',
+  },
+  continueButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 5,
   },
   quickActions: {
+    marginBottom: 20,
+  },
+  actionsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: spacing.xl,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   actionButton: {
-    backgroundColor: colors.white,
-    borderRadius: spacing.borderRadius.lg,
-    padding: spacing.md,
+    backgroundColor: '#1e293b',
+    borderRadius: 12,
+    padding: 20,
     alignItems: 'center',
-    minWidth: 80,
+    width: '48%',
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  actionIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   actionText: {
-    fontSize: typography.fontSize.xs,
-    color: colors.textDark,
+    fontSize: 14,
+    color: '#fff',
     textAlign: 'center',
-    marginTop: spacing.xs,
+    fontWeight: '500',
   },
 });
 

@@ -20,7 +20,8 @@ const OTPInput = ({
   phoneNumber,
   loading = false,
   error = null,
-  resendTimer = 60
+  resendTimer = 60,
+  method = 'sms' // ✅ NEW: Add method prop
 }) => {
   const [otp, setOtp] = useState(new Array(length).fill(''));
   const [timer, setTimer] = useState(resendTimer);
@@ -101,12 +102,46 @@ const OTPInput = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // ✅ NEW: Get method display info
+  const getMethodInfo = () => {
+    switch (method) {
+      case 'whatsapp':
+        return {
+          icon: '📱',
+          name: 'WhatsApp',
+          description: 'Vérifiez votre WhatsApp'
+        };
+      case 'sms':
+      default:
+        return {
+          icon: '💬',
+          name: 'SMS',
+          description: 'Vérifiez vos messages'
+        };
+    }
+  };
+
+  const methodInfo = getMethodInfo();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Vérifiez votre numéro de téléphone...</Text>
+      {/* ✅ NEW: Method indicator */}
+      <View style={styles.methodIndicator}>
+        <Text style={styles.methodIcon}>{methodInfo.icon}</Text>
+        <Text style={styles.methodName}>{methodInfo.name}</Text>
+      </View>
+
+      <Text style={styles.title}>Vérifiez votre numéro de téléphone</Text>
       <Text style={styles.subtitle}>
-        Veuillez renseigner le code envoyé par SMS au {phoneNumber}
+        Veuillez renseigner le code envoyé par {methodInfo.name} au {phoneNumber}
       </Text>
+      
+      {/* ✅ NEW: Additional instruction for WhatsApp */}
+      {method === 'whatsapp' && (
+        <Text style={styles.whatsappInstruction}>
+          {methodInfo.description} pour voir le code de vérification
+        </Text>
+      )}
 
       <View style={styles.otpContainer}>
         {otp.map((digit, index) => (
@@ -140,7 +175,9 @@ const OTPInput = ({
         </Text>
         {canResend ? (
           <TouchableOpacity onPress={handleResend} disabled={loading}>
-            <Text style={styles.resendLink}>Renvoyer le code.</Text>
+            <Text style={styles.resendLink}>
+              Renvoyer par {methodInfo.name}
+            </Text>
           </TouchableOpacity>
         ) : (
           <Text style={styles.timerText}>
@@ -148,6 +185,13 @@ const OTPInput = ({
           </Text>
         )}
       </View>
+
+      {/* ✅ NEW: Loading indicator */}
+      {loading && (
+        <Text style={styles.loadingText}>
+          {method === 'whatsapp' ? 'Envoi WhatsApp...' : 'Envoi SMS...'}
+        </Text>
+      )}
     </View>
   );
 };
@@ -158,20 +202,49 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,
   },
+  // ✅ NEW: Method indicator styles
+  methodIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: spacing.borderRadius.lg,
+    alignSelf: 'center',
+  },
+  methodIcon: {
+    fontSize: 24,
+    marginRight: spacing.sm,
+  },
+  methodName: {
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.white,
+  },
   title: {
     fontSize: typography.fontSize.xl,
     fontWeight: typography.fontWeight.semibold,
     color: colors.white,
-    textAlign: 'left',
+    textAlign: 'center',
     marginBottom: spacing.md,
   },
   subtitle: {
     fontSize: typography.fontSize.sm,
     color: colors.white,
     opacity: 0.8,
-    textAlign: 'left',
-    marginBottom: spacing.xxl,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
     lineHeight: 20,
+  },
+  // ✅ NEW: WhatsApp instruction
+  whatsappInstruction: {
+    fontSize: typography.fontSize.xs,
+    color: colors.secondary,
+    textAlign: 'center',
+    marginBottom: spacing.xl,
+    fontStyle: 'italic',
   },
   otpContainer: {
     flexDirection: 'row',
@@ -225,6 +298,14 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.sm,
     color: colors.white,
     opacity: 0.7,
+  },
+  // ✅ NEW: Loading text
+  loadingText: {
+    fontSize: typography.fontSize.sm,
+    color: colors.secondary,
+    textAlign: 'center',
+    marginTop: spacing.md,
+    fontStyle: 'italic',
   },
 });
 

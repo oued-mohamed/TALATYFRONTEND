@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,588 +6,1247 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Platform,
+  Dimensions,
+  Animated,
+  StatusBar,
   TextInput,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
-// Remove this if you don't have react-native-vector-icons installed
-// import Icon from 'react-native-vector-icons/MaterialIcons';
-
-// Instead, let's use simple Text or emojis for icons
-const Icon = ({ name, size, color, style }) => {
-  const iconMap = {
-    'check-circle': '✅',
-    'upload-file': '📄',
-    'camera-alt': '📷',
-    'photo-library': '🖼️',
-    'arrow-back': '←',
-  };
-  return (
-    <Text style={[{ fontSize: size, color }, style]}>
-      {iconMap[name] || '•'}
-    </Text>
-  );
-};
-import Header from '../../components/common/Header';
-import Button from '../../components/common/Button';
-import ProgressBar from '../../components/common/ProgressBar';
-import Modal from '../../components/common/Modal';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useAuth } from '../../context/AuthContext';
 import { useKYC } from '../../context/KYCContext';
-import { colors } from '../../styles/colors';
-import { typography } from '../../styles/typography';
-import { spacing } from '../../styles/spacing';
+
+const { width, height } = Dimensions.get('window');
 
 const DocumentUploadScreen = ({ navigation }) => {
-  const { uploadDocument, isLoading } = useKYC();
-  const [uploadProgress, setUploadProgress] = useState({});
-  const [showImagePicker, setShowImagePicker] = useState(false);
-  const [selectedDocumentType, setSelectedDocumentType] = useState(null);
-  const [ribNumber, setRibNumber] = useState('');
-  const [uploadedDocuments, setUploadedDocuments] = useState(new Set());
-
-  const documents = [
-    {
-      type: 'business_registration',
-      title: 'Registre de Commerce (Modèle J)',
-      required: true,
-      uploaded: false,
-      fileName: 'RC.pdf',
-    },
-    {
-      type: 'bank_statement',
-      title: 'Relevés bancaires',
-      subtitle: 'janvier 2025, février 2025, mars 2025',
-      required: true,
-      uploaded: false,
-      multiple: true,
-      months: ['janvier 2025', 'février 2025', 'mars 2025'],
-      uploadedFiles: [],
-    },
-  ];
-
-  const [documentsState, setDocumentsState] = useState(documents);
+  const { user } = useAuth();
+  const { updateKYCStep } = useKYC();
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [expandedSections, setExpandedSections] = useState({
+    legal: true,
+    fiscal: true,
+    financial: true,
+    business: false,
+    additional: false
+  });
+  const [ribNumber, setRibNumber] = useState('000 - 000 - 00000000000000000 - 00');
+  
+  // Animation values
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [slideAnim] = useState(new Animated.Value(30));
+  const [progressAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
-    // Initialize RIB with placeholder or existing value
-    if (!ribNumber) {
-      setRibNumber('000 - 000 - 0000000000000000 - 00');
-    }
-  }, []);
+    // Entrance animation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start();
 
-  const handleDocumentPress = (documentType) => {
-    setSelectedDocumentType(documentType);
-    setShowImagePicker(true);
+    // Progress animation
+    const progress = getRequiredDocumentsCount();
+    Animated.timing(progressAnim, {
+      toValue: progress.total > 0 ? progress.uploaded / progress.total : 0,
+      duration: 1000,
+      useNativeDriver: false,
+    }).start();
+  }, [uploadedFiles]);
+
+  const documentTypes = [
+    {
+      id: 'business_registration',
+      title: 'Registre de Commerce (Modèle J)',
+      description: 'Document officiel d\'enregistrement de votre entreprise',
+      icon: '🏢',
+      required: true,
+      maxSize: '5 MB',
+      formats: ['.pdf', '.jpg', '.png'],
+      gradient: ['#667eea', '#764ba2'],
+      category: 'legal',
+    },
+    {
+      id: 'tax_certificate',
+      title: 'Certificat fiscal',
+      description: 'Attestation fiscale de votre entreprise',
+      icon: '🧾',
+      required: true,
+      maxSize: '5 MB',
+      formats: ['.pdf', '.jpg', '.png'],
+      gradient: ['#f093fb', '#f5576c'],
+      category: 'fiscal',
+    },
+    {
+      id: 'bank_statements',
+      title: 'Relevés bancaires',
+      description: 'Derniers relevés bancaires (3 derniers mois)',
+      icon: '💳',
+      required: true,
+      maxSize: '10 MB',
+      formats: ['.pdf', '.jpg', '.png'],
+      gradient: ['#4facfe', '#00f2fe'],
+      category: 'financial',
+      multipleFiles: ['file1', 'file2', 'file3']
+    },
+    {
+      id: 'financial_statements',
+      title: 'États financiers',
+      description: 'Bilans comptables et comptes de résultat',
+      icon: '📈',
+      required: false,
+      maxSize: '10 MB',
+      formats: ['.pdf', '.xlsx', '.xls', '.doc', '.docx'],
+      gradient: ['#43e97b', '#38f9d7'],
+      category: 'financial',
+    },
+    {
+      id: 'business_plan',
+      title: 'Plan d\'affaires',
+      description: 'Document présentant votre projet (optionnel)',
+      icon: '📊',
+      required: false,
+      maxSize: '15 MB',
+      formats: ['.pdf', '.doc', '.docx', '.ppt', '.pptx'],
+      gradient: ['#fa709a', '#fee140'],
+      category: 'business',
+    },
+    {
+      id: 'other_documents',
+      title: 'Autres documents',
+      description: 'Tout autre document justificatif',
+      icon: '📄',
+      required: false,
+      maxSize: '10 MB',
+      formats: ['.pdf', '.jpg', '.png', '.doc', '.docx', '.xlsx'],
+      gradient: ['#a8edea', '#fed6e3'],
+      category: 'additional',
+    }
+  ];
+
+  const isValidFileType = (fileName, allowedFormats) => {
+    const fileExtension = '.' + fileName.split('.').pop().toLowerCase();
+    return allowedFormats.includes(fileExtension);
   };
 
-  const handleImagePicker = (option) => {
-    setShowImagePicker(false);
-    
-    const options = {
-      mediaType: 'photo',
-      quality: 0.8,
-      maxWidth: 1200,
-      maxHeight: 1200,
-    };
+  const isValidFileSize = (fileSize, maxSizeStr) => {
+    const maxSizeBytes = parseFloat(maxSizeStr) * 1024 * 1024;
+    return fileSize <= maxSizeBytes;
+  };
 
-    const callback = (response) => {
-      if (response.didCancel || response.error) {
-        return;
+  const handleFileSelect = (documentType, specificFile = null) => {
+    if (Platform.OS === 'web') {
+      try {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = documentType.formats.join(',');
+        input.multiple = !specificFile;
+
+        input.onchange = (event) => {
+          const files = Array.from(event.target.files);
+          handleFilesSelected(files, documentType, specificFile);
+        };
+
+        input.click();
+      } catch (error) {
+        Alert.alert('Erreur', 'Impossible d\'ouvrir le sélecteur de fichiers');
       }
-
-      if (response.assets && response.assets[0]) {
-        uploadDocumentFile(selectedDocumentType, response.assets[0]);
-      }
-    };
-
-    if (option === 'camera') {
-      launchCamera(options, callback);
     } else {
-      launchImageLibrary(options, callback);
+      Alert.alert(
+        'Mobile Upload',
+        'File upload for mobile needs react-native-document-picker implementation',
+        [{ text: 'OK' }]
+      );
     }
   };
 
-  const uploadDocumentFile = async (documentType, fileData) => {
-    try {
-      setUploadProgress(prev => ({ ...prev, [documentType]: 0 }));
-      
-      const result = await uploadDocument(documentType, fileData, (progress) => {
-        setUploadProgress(prev => ({ ...prev, [documentType]: progress }));
-      });
-      
-      if (result.success) {
-        setUploadProgress(prev => ({ ...prev, [documentType]: 100 }));
-        setUploadedDocuments(prev => new Set([...prev, documentType]));
-        
-        // Update documents state
-        setDocumentsState(prev => prev.map(doc => {
-          if (doc.type === documentType) {
-            if (doc.multiple) {
-              return {
-                ...doc,
-                uploadedFiles: [...(doc.uploadedFiles || []), fileData.fileName || 'document.pdf']
-              };
-            } else {
-              return { ...doc, uploaded: true };
-            }
-          }
-          return doc;
-        }));
-        
-        Alert.alert('Succès', 'Document téléchargé avec succès');
-      } else {
-        setUploadProgress(prev => ({ ...prev, [documentType]: 0 }));
-        Alert.alert('Erreur', result.message);
+  const handleFilesSelected = async (files, documentType, specificFile = null) => {
+    const validFiles = [];
+    const errors = [];
+
+    for (const file of files) {
+      if (!isValidFileType(file.name, documentType.formats)) {
+        const error = `${file.name}: Format non supporté. Formats acceptés: ${documentType.formats.join(', ')}`;
+        errors.push(error);
+        continue;
       }
-    } catch (error) {
-      setUploadProgress(prev => ({ ...prev, [documentType]: 0 }));
-      Alert.alert('Erreur', 'Échec du téléchargement du document');
+
+      if (!isValidFileSize(file.size, documentType.maxSize)) {
+        const error = `${file.name}: Fichier trop volumineux. Taille max: ${documentType.maxSize}`;
+        errors.push(error);
+        continue;
+      }
+
+      const validFile = {
+        id: `${documentType.id}_${Date.now()}_${Math.random()}`,
+        file: file,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        documentType: documentType.id,
+        documentTitle: documentType.title,
+        specificFile: specificFile,
+        uploadedAt: new Date(),
+        status: 'pending',
+        uploadProgress: 0,
+      };
+      
+      validFiles.push(validFile);
+    }
+
+    if (errors.length > 0) {
+      Alert.alert(
+        'Erreurs de validation',
+        errors.join('\n\n'),
+        [{ text: 'OK' }]
+      );
+    }
+
+    if (validFiles.length > 0) {
+      await uploadFiles(validFiles);
     }
   };
 
-  const formatRIB = (text) => {
-    // Remove all non-numeric characters
-    const numbers = text.replace(/\D/g, '');
-    
-    // Limit to 24 digits
-    const limited = numbers.substring(0, 24);
-    
-    // Format as XXX - XXX - XXXXXXXXXXXXXXXX - XX
-    let formatted = '';
-    if (limited.length > 0) {
-      formatted += limited.substring(0, 3);
-      if (limited.length > 3) {
-        formatted += ' - ' + limited.substring(3, 6);
-        if (limited.length > 6) {
-          formatted += ' - ' + limited.substring(6, 22);
-          if (limited.length > 22) {
-            formatted += ' - ' + limited.substring(22, 24);
+  const uploadFiles = async (files) => {
+    setIsUploading(true);
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        file.status = 'uploading';
+        setUploadedFiles(prev => [...prev, file]);
+
+        // Simulate upload progress
+        for (let progress = 0; progress <= 100; progress += 20) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
+          setUploadedFiles(prev => 
+            prev.map(f => 
+              f.id === file.id 
+                ? { ...f, uploadProgress: progress }
+                : f
+            )
+          );
+        }
+
+        // Complete upload
+        file.status = 'completed';
+        file.uploadProgress = 100;
+        
+        setUploadedFiles(prev => 
+          prev.map(f => 
+            f.id === file.id 
+              ? { ...f, status: 'completed', uploadProgress: 100 }
+              : f
+          )
+        );
+      }
+
+      Alert.alert(
+        'Upload réussi',
+        `${files.length} fichier(s) téléchargé(s) avec succès`,
+        [{ text: 'OK' }]
+      );
+
+    } catch (error) {
+      Alert.alert('Erreur', 'Erreur lors du téléchargement des fichiers');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeFile = (fileId) => {
+    Alert.alert(
+      'Supprimer le fichier',
+      'Êtes-vous sûr de vouloir supprimer ce fichier ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: () => {
+            setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
           }
         }
-      }
-    }
-    
-    return formatted;
-  };
-
-  const handleRIBChange = (text) => {
-    const formatted = formatRIB(text);
-    setRibNumber(formatted);
-  };
-
-  const isRIBValid = () => {
-    const numbers = ribNumber.replace(/\D/g, '');
-    return numbers.length === 24;
-  };
-
-  const areDocumentsUploaded = () => {
-    return documentsState.every(doc => {
-      if (doc.multiple) {
-        return doc.uploadedFiles && doc.uploadedFiles.length > 0;
-      }
-      return doc.uploaded;
-    });
-  };
-
-  const handleContinue = () => {
-    if (!areDocumentsUploaded()) {
-      Alert.alert('Documents manquants', 'Veuillez télécharger tous les documents requis avant de continuer.');
-      return;
-    }
-    
-    if (!isRIBValid()) {
-      Alert.alert('RIB invalide', 'Veuillez saisir un RIB valide de 24 caractères.');
-      return;
-    }
-    
-    // Save RIB and continue to next step
-    navigation.navigate('IdentityVerification');
-  };
-
-  const renderDocument = (document) => {
-    const isUploaded = document.uploaded || (document.uploadedFiles && document.uploadedFiles.length > 0);
-    const progressKey = document.type;
-    const currentProgress = uploadProgress[progressKey] || 0;
-    
-    return (
-      <View key={document.type} style={styles.documentSection}>
-        <Text style={styles.documentTitle}>{document.title}</Text>
-        
-        {document.multiple ? (
-          <View style={styles.multipleDocumentsContainer}>
-            {document.months.map((month, index) => {
-              const monthUploaded = document.uploadedFiles && document.uploadedFiles.length > index;
-              return (
-                <TouchableOpacity
-                  key={month}
-                  style={[
-                    styles.monthUploadCard,
-                    monthUploaded && styles.monthUploadCardUploaded
-                  ]}
-                  onPress={() => handleDocumentPress(document.type)}
-                >
-                  <View style={styles.monthUploadContent}>
-                    <View style={styles.uploadIcon}>
-                      <Icon
-                        name={monthUploaded ? "check-circle" : "upload-file"}
-                        size={24}
-                        color={monthUploaded ? colors.success : colors.gray}
-                      />
-                    </View>
-                    <Text style={[
-                      styles.monthText,
-                      monthUploaded && styles.monthTextUploaded
-                    ]}>
-                      {month}
-                    </Text>
-                    {monthUploaded && (
-                      <View style={styles.uploadSuccessIndicator}>
-                        <Text style={styles.successPercentage}>100%</Text>
-                        <View style={styles.progressBarSmall}>
-                          <View style={[styles.progressFillSmall, { width: '100%' }]} />
-                        </View>
-                        <Text style={styles.uploadedFileName}>
-                          {document.uploadedFiles[index] || 'releve-janvier.pdf'}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={[
-              styles.singleDocumentCard,
-              isUploaded && styles.singleDocumentCardUploaded
-            ]}
-            onPress={() => handleDocumentPress(document.type)}
-          >
-            <View style={styles.singleDocumentContent}>
-              <View style={styles.uploadIcon}>
-                <Icon
-                  name={isUploaded ? "check-circle" : "upload-file"}
-                  size={24}
-                  color={isUploaded ? colors.success : colors.gray}
-                />
-              </View>
-              {isUploaded ? (
-                <View style={styles.uploadedInfo}>
-                  <Text style={styles.successPercentage}>100%</Text>
-                  <View style={styles.progressBarSmall}>
-                    <View style={[styles.progressFillSmall, { width: '100%' }]} />
-                  </View>
-                  <Text style={styles.uploadedFileName}>{document.fileName}</Text>
-                </View>
-              ) : (
-                <Text style={styles.uploadPlaceholder}>Appuyez pour télécharger</Text>
-              )}
-            </View>
-          </TouchableOpacity>
-        )}
-        
-        {currentProgress > 0 && currentProgress < 100 && (
-          <View style={styles.uploadProgress}>
-            <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBarFill, { width: `${currentProgress}%` }]} />
-            </View>
-            <Text style={styles.progressText}>{currentProgress}%</Text>
-          </View>
-        )}
-      </View>
+      ]
     );
   };
 
-  const renderRIBSection = () => (
-    <View style={styles.ribSection}>
-      <Text style={styles.ribTitle}>Votre RIB (24 caractères)</Text>
-      <View style={styles.ribInputContainer}>
-        <TextInput
-          style={[
-            styles.ribInput,
-            !isRIBValid() && ribNumber.replace(/\D/g, '').length > 0 && styles.ribInputError
-          ]}
-          value={ribNumber}
-          onChangeText={handleRIBChange}
-          placeholder="000 - 000 - 0000000000000000 - 00"
-          placeholderTextColor={colors.textLight}
-          keyboardType="numeric"
-          maxLength={29} // Account for dashes and spaces
-        />
-        {isRIBValid() && (
-          <View style={styles.ribValidIcon}>
-            <Icon name="check-circle" size={20} color={colors.success} />
-          </View>
-        )}
-      </View>
-      {!isRIBValid() && ribNumber.replace(/\D/g, '').length > 0 && (
-        <Text style={styles.ribErrorText}>
-          Le RIB doit contenir exactement 24 chiffres
-        </Text>
-      )}
-    </View>
-  );
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getUploadedFilesForType = (docType, specificFile = null) => {
+    return uploadedFiles.filter(file => 
+      file.documentType === docType && 
+      (!specificFile || file.specificFile === specificFile)
+    );
+  };
+
+  const getRequiredDocumentsCount = () => {
+    const requiredTypes = documentTypes.filter(doc => doc.required);
+    const uploadedRequiredTypes = new Set();
+    
+    requiredTypes.forEach(docType => {
+      if (docType.multipleFiles) {
+        // For bank statements, check if all 3 files are uploaded
+        const allFilesUploaded = docType.multipleFiles.every(fileName => 
+          uploadedFiles.some(file => 
+            file.documentType === docType.id && 
+            file.specificFile === fileName && 
+            file.status === 'completed'
+          )
+        );
+        if (allFilesUploaded) {
+          uploadedRequiredTypes.add(docType.id);
+        }
+      } else {
+        // For other documents, check if at least one file is uploaded
+        const hasFile = uploadedFiles.some(file => 
+          file.documentType === docType.id && file.status === 'completed'
+        );
+        if (hasFile) {
+          uploadedRequiredTypes.add(docType.id);
+        }
+      }
+    });
+    
+    return { uploaded: uploadedRequiredTypes.size, total: requiredTypes.length };
+  };
+
+  const toggleSection = (sectionId) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
+  const handleContinue = async () => {
+    const { uploaded, total } = getRequiredDocumentsCount();
+    
+    if (uploaded < total) {
+      Alert.alert(
+        'Documents requis manquants',
+        `Veuillez télécharger tous les documents requis (${uploaded}/${total} complétés)`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    try {
+      await updateKYCStep('document_upload', {
+        documents: uploadedFiles.filter(f => f.status === 'completed'),
+        completedAt: new Date()
+      });
+
+      Alert.alert(
+        'Documents téléchargés',
+        'Vos documents ont été téléchargés avec succès !',
+        [
+          {
+            text: 'Continuer',
+            onPress: () => navigation.goBack()
+          }
+        ]
+      );
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de sauvegarder les documents');
+    }
+  };
+
+  const requiredProgress = getRequiredDocumentsCount();
+  const progressPercentage = requiredProgress.total > 0 ? (requiredProgress.uploaded / requiredProgress.total) * 100 : 0;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header
-        title="Téléchargez vos documents."
-        onLeftPress={() => navigation.goBack()}
-        backgroundColor={colors.primary}
-        // Remove leftIcon and titleStyle if your Header doesn't support them
-      />
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.documentsSection}>
-          {documentsState.map(renderDocument)}
-        </View>
-
-        {renderRIBSection()}
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#1e293b" />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => navigation.goBack()}
+        >
+          <Icon name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
         
-        <View style={styles.spacing} />
-      </ScrollView>
-
-      <View style={styles.footer}>
-        <Button
-          title="CONTINUER"
-          onPress={handleContinue}
-          disabled={isLoading || !areDocumentsUploaded() || !isRIBValid()}
-          loading={isLoading}
-          style={[
-            styles.continueButton,
-            (!areDocumentsUploaded() || !isRIBValid()) && styles.continueButtonDisabled
-          ]}
-        />
+        <Text style={styles.headerTitle}>Téléchargez vos documents</Text>
+        
+        <View style={styles.headerRight}>
+          <View style={styles.progressBadge}>
+            <Text style={styles.progressBadgeText}>
+              {requiredProgress.uploaded}/{requiredProgress.total}
+            </Text>
+          </View>
+        </View>
       </View>
 
-      <Modal
-        visible={showImagePicker}
-        onClose={() => setShowImagePicker(false)}
-        title="Choisir une option"
-      >
-        <View style={styles.imagePickerOptions}>
-          <TouchableOpacity
-            style={styles.optionButton}
-            onPress={() => handleImagePicker('camera')}
-          >
-            <Icon name="camera-alt" size={24} color={colors.primary} />
-            <Text style={styles.optionText}>Prendre une photo</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.optionButton}
-            onPress={() => handleImagePicker('gallery')}
-          >
-            <Icon name="photo-library" size={24} color={colors.primary} />
-            <Text style={styles.optionText}>Choisir dans la galerie</Text>
-          </TouchableOpacity>
+      {/* Progress Section */}
+      <Animated.View style={[styles.progressSection, { opacity: fadeAnim }]}>
+        <Text style={styles.progressTitle}>
+          Progression des documents requis
+        </Text>
+        <View style={styles.progressBarContainer}>
+          <View style={styles.progressBar}>
+            <Animated.View 
+              style={[
+                styles.progressFill, 
+                { 
+                  width: progressAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0%', '100%'],
+                  })
+                }
+              ]} 
+            />
+          </View>
+          <Text style={styles.progressPercentage}>{Math.round(progressPercentage)}%</Text>
         </View>
-      </Modal>
-    </SafeAreaView>
+      </Animated.View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+          <Text style={styles.description}>
+            📁 Téléchargez vos documents professionnels pour finaliser votre vérification. 
+            Les documents marqués d'une étoile (*) sont obligatoires.
+          </Text>
+
+          {/* Document Categories */}
+          {['legal', 'fiscal', 'financial', 'business', 'additional'].map((category, categoryIndex) => {
+            const categoryDocs = documentTypes.filter(doc => doc.category === category);
+            if (categoryDocs.length === 0) return null;
+
+            const categoryTitles = {
+              legal: '⚖️ Documents légaux',
+              fiscal: '💰 Documents fiscaux', 
+              financial: '📊 Documents financiers',
+              business: '🚀 Plan d\'affaires',
+              additional: '📄 Documents supplémentaires'
+            };
+
+            return (
+              <View key={category} style={styles.categorySection}>
+                <TouchableOpacity 
+                  style={styles.categoryHeader}
+                  onPress={() => toggleSection(category)}
+                >
+                  <Text style={styles.categoryTitle}>{categoryTitles[category]}</Text>
+                  <Icon 
+                    name={expandedSections[category] ? "expand-less" : "expand-more"} 
+                    size={24} 
+                    color="#94a3b8" 
+                  />
+                </TouchableOpacity>
+
+                {(expandedSections[category] !== false) && categoryDocs.map((docType, index) => {
+                  const uploadedForType = getUploadedFilesForType(docType.id);
+                  const hasUploaded = uploadedForType.length > 0;
+                  
+                  return (
+                    <Animated.View
+                      key={docType.id}
+                      style={[
+                        styles.documentCard,
+                        {
+                          transform: [{
+                            translateX: slideAnim.interpolate({
+                              inputRange: [0, 30],
+                              outputRange: [0, 30 + (index * 10)],
+                            })
+                          }],
+                        }
+                      ]}
+                    >
+                      {/* Document Header */}
+                      <View style={[styles.documentHeader, { backgroundColor: docType.gradient[0] }]}>
+                        <View style={styles.documentIconContainer}>
+                          <Text style={styles.documentIcon}>{docType.icon}</Text>
+                        </View>
+                        
+                        <View style={styles.documentInfo}>
+                          <View style={styles.documentTitleRow}>
+                            <Text style={styles.documentTitle}>
+                              {docType.title}
+                            </Text>
+                            {docType.required && <Text style={styles.requiredStar}>*</Text>}
+                            {hasUploaded && (
+                              <View style={styles.uploadedBadge}>
+                                <Icon name="check-circle" size={16} color="#fff" />
+                              </View>
+                            )}
+                          </View>
+                          <Text style={styles.documentDescription}>
+                            {docType.description}
+                          </Text>
+                          <Text style={styles.documentSpecs}>
+                            📏 Max: {docType.maxSize} • 📋 {docType.formats.join(', ')}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Special handling for bank statements */}
+                      {docType.multipleFiles ? (
+                        <View style={styles.bankStatementsContainer}>
+                          {docType.multipleFiles.map((fileName, fileIndex) => {
+                            const fileUploaded = getUploadedFilesForType(docType.id, fileName);
+                            const hasFile = fileUploaded.length > 0;
+                            
+                            return (
+                              <View key={fileName} style={styles.bankFileCard}>
+                                <View style={styles.bankFileHeader}>
+                                  <Text style={styles.bankFileIcon}>💳</Text>
+                                  <Text style={styles.bankFileName}>{fileName}</Text>
+                                </View>
+                                
+                                {hasFile ? (
+                                  <View>
+                                    {fileUploaded.map(file => (
+                                      <View key={file.id} style={styles.uploadedFileContainer}>
+                                        <View style={styles.uploadedFileInfo}>
+                                          <Text style={styles.uploadedFileName}>{file.name}</Text>
+                                          <Text style={styles.uploadedFileSize}>{formatFileSize(file.size)}</Text>
+                                          
+                                          {file.status === 'uploading' && (
+                                            <View style={styles.uploadProgressBank}>
+                                              <View style={styles.progressBarSmallBank}>
+                                                <View 
+                                                  style={[
+                                                    styles.progressFillSmallBank,
+                                                    { width: `${file.uploadProgress || 0}%` }
+                                                  ]} 
+                                                />
+                                              </View>
+                                              <Text style={styles.uploadProgressTextBank}>
+                                                {file.uploadProgress || 0}%
+                                              </Text>
+                                            </View>
+                                          )}
+                                          
+                                          {file.status === 'completed' && (
+                                            <View style={styles.fileStatusContainerBank}>
+                                              <Icon name="check-circle" size={14} color="#10b981" />
+                                              <Text style={styles.fileStatusCompletedBank}>Téléchargé</Text>
+                                            </View>
+                                          )}
+                                        </View>
+                                        
+                                        {file.status === 'completed' && (
+                                          <TouchableOpacity
+                                            style={styles.removeButtonBank}
+                                            onPress={() => removeFile(file.id)}
+                                          >
+                                            <Icon name="delete" size={18} color="#ef4444" />
+                                          </TouchableOpacity>
+                                        )}
+                                      </View>
+                                    ))}
+                                    
+                                    <TouchableOpacity
+                                      style={styles.replaceButton}
+                                      onPress={() => handleFileSelect(docType, fileName)}
+                                      disabled={isUploading}
+                                    >
+                                      <Icon name="add" size={16} color="#06b6d4" />
+                                      <Text style={styles.replaceButtonText}>Remplacer</Text>
+                                    </TouchableOpacity>
+                                  </View>
+                                ) : (
+                                  <TouchableOpacity
+                                    style={styles.bankUploadButton}
+                                    onPress={() => handleFileSelect(docType, fileName)}
+                                    disabled={isUploading}
+                                  >
+                                    {isUploading ? (
+                                      <View style={styles.uploadingContainer}>
+                                        <Icon name="hourglass-empty" size={16} color="#fff" />
+                                        <Text style={styles.bankUploadButtonText}>Upload...</Text>
+                                      </View>
+                                    ) : (
+                                      <View style={styles.uploadingContainer}>
+                                        <Icon name="cloud-upload" size={16} color="#fff" />
+                                        <Text style={styles.bankUploadButtonText}>Sélectionner</Text>
+                                      </View>
+                                    )}
+                                  </TouchableOpacity>
+                                )}
+                              </View>
+                            );
+                          })}
+                        </View>
+                      ) : (
+                        /* Regular document upload */
+                        <View>
+                          <TouchableOpacity
+                            style={[
+                              styles.uploadButton,
+                              isUploading && styles.uploadButtonDisabled,
+                              hasUploaded && styles.uploadButtonSuccess
+                            ]}
+                            onPress={() => handleFileSelect(docType)}
+                            disabled={isUploading}
+                          >
+                            <Icon 
+                              name={hasUploaded ? "add-circle" : "cloud-upload"} 
+                              size={20} 
+                              color="#fff" 
+                              style={styles.uploadIcon}
+                            />
+                            <Text style={styles.uploadButtonText}>
+                              {isUploading ? '⏳ Upload en cours...' : 
+                               hasUploaded ? '➕ Ajouter d\'autres fichiers' : 
+                               '📎 Sélectionner fichier(s)'}
+                            </Text>
+                          </TouchableOpacity>
+
+                          {/* Uploaded Files */}
+                          {uploadedForType.map((file) => (
+                            <View key={file.id} style={styles.fileItem}>
+                              <View style={styles.fileIcon}>
+                                <Icon name="description" size={20} color="#64748b" />
+                              </View>
+                              
+                              <View style={styles.fileDetails}>
+                                <Text style={styles.fileName}>{file.name}</Text>
+                                <Text style={styles.fileSize}>{formatFileSize(file.size)}</Text>
+                                
+                                {file.status === 'uploading' && (
+                                  <View style={styles.uploadProgress}>
+                                    <View style={styles.progressBarSmall}>
+                                      <View 
+                                        style={[
+                                          styles.progressFillSmall,
+                                          { width: `${file.uploadProgress || 0}%` }
+                                        ]} 
+                                      />
+                                    </View>
+                                    <Text style={styles.uploadProgressText}>
+                                      {file.uploadProgress || 0}%
+                                    </Text>
+                                  </View>
+                                )}
+                                
+                                {file.status === 'completed' && (
+                                  <View style={styles.fileStatusContainer}>
+                                    <Icon name="check-circle" size={16} color="#10b981" />
+                                    <Text style={styles.fileStatusCompleted}>Téléchargé</Text>
+                                  </View>
+                                )}
+                              </View>
+                              
+                              {file.status === 'completed' && (
+                                <TouchableOpacity
+                                  style={styles.removeButton}
+                                  onPress={() => removeFile(file.id)}
+                                >
+                                  <Icon name="delete" size={20} color="#ef4444" />
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                    </Animated.View>
+                  );
+                })}
+              </View>
+            );
+          })}
+
+          {/* RIB Section */}
+          <View style={styles.ribSection}>
+            <Text style={styles.ribTitle}>Votre RIB (24 caractères)</Text>
+            <TextInput
+              style={styles.ribInput}
+              value={ribNumber}
+              onChangeText={setRibNumber}
+              placeholder="000 - 000 - 00000000000000000 - 00"
+              placeholderTextColor="#64748b"
+            />
+          </View>
+
+          {/* Upload Summary */}
+          {uploadedFiles.length > 0 && (
+            <Animated.View style={[styles.summarySection, { opacity: fadeAnim }]}>
+              <Text style={styles.summaryTitle}>📊 Résumé</Text>
+              <View style={styles.summaryStats}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>
+                    {uploadedFiles.filter(f => f.status === 'completed').length}
+                  </Text>
+                  <Text style={styles.statLabel}>Fichiers téléchargés</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>
+                    {requiredProgress.uploaded}/{requiredProgress.total}
+                  </Text>
+                  <Text style={styles.statLabel}>Documents requis</Text>
+                </View>
+              </View>
+            </Animated.View>
+          )}
+        </Animated.View>
+      </ScrollView>
+
+      {/* Action Buttons */}
+      <Animated.View style={[styles.actionContainer, { opacity: fadeAnim }]}>
+        {requiredProgress.uploaded === requiredProgress.total ? (
+          <TouchableOpacity 
+            style={styles.continueButton}
+            onPress={handleContinue}
+          >
+            <Icon name="check-circle" size={20} color="#fff" style={styles.buttonIcon} />
+            <Text style={styles.continueButtonText}>Finaliser l'upload</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.continueButtonDisabled}>
+            <Icon name="hourglass-empty" size={20} color="#64748b" style={styles.buttonIcon} />
+            <Text style={styles.continueButtonTextDisabled}>
+              Complétez les documents requis ({requiredProgress.uploaded}/{requiredProgress.total})
+            </Text>
+          </View>
+        )}
+
+        <TouchableOpacity 
+          style={styles.laterButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.laterButtonText}>⏰ Continuer plus tard</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: '#0f172a',
   },
-  keyboardAvoidingView: {
-    flex: 1,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1e293b',
+    paddingTop: StatusBar.currentHeight + 10,
+    paddingBottom: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#334155',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   headerTitle: {
-    color: colors.white,
-    fontSize: typography.fontSize.lg,
-    fontWeight: typography.fontWeight.bold,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    flex: 1,
+    textAlign: 'center',
+  },
+  headerRight: {
+    width: 40,
+    alignItems: 'flex-end',
+  },
+  progressBadge: {
+    backgroundColor: 'rgba(6,182,212,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(6,182,212,0.3)',
+  },
+  progressBadgeText: {
+    fontSize: 12,
+    color: '#67e8f9',
+    fontWeight: '600',
+  },
+  progressSection: {
+    backgroundColor: '#1e293b',
+    padding: 20,
+    marginHorizontal: 15,
+    marginTop: 15,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  progressTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 12,
+  },
+  progressBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  progressBar: {
+    flex: 1,
+    height: 8,
+    backgroundColor: '#334155',
+    borderRadius: 4,
+    marginRight: 12,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#06b6d4',
+    borderRadius: 4,
+  },
+  progressPercentage: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#67e8f9',
+    minWidth: 35,
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
+    padding: 15,
   },
-  documentsSection: {
-    marginTop: spacing.lg,
+  description: {
+    fontSize: 14,
+    color: '#cbd5e1',
+    lineHeight: 22,
+    marginBottom: 25,
+    backgroundColor: '#1e293b',
+    padding: 15,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#06b6d4',
+    borderWidth: 1,
+    borderColor: '#334155',
   },
-  documentSection: {
-    marginBottom: spacing.xl,
+  categorySection: {
+    marginBottom: 20,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1e293b',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  categoryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  documentCard: {
+    backgroundColor: '#1e293b',
+    borderRadius: 16,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#334155',
+    overflow: 'hidden',
+  },
+  documentHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  documentIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  documentIcon: {
+    fontSize: 24,
+  },
+  documentInfo: {
+    flex: 1,
+  },
+  documentTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
   },
   documentTitle: {
-    fontSize: typography.fontSize.base,
-    fontWeight: typography.fontWeight.medium,
-    color: colors.white,
-    marginBottom: spacing.md,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    flex: 1,
   },
-  singleDocumentCard: {
-    backgroundColor: colors.white,
-    borderRadius: spacing.borderRadius.lg,
-    padding: spacing.lg,
+  requiredStar: {
+    fontSize: 16,
+    color: '#fde047',
+    fontWeight: 'bold',
+    marginLeft: 5,
+  },
+  uploadedBadge: {
+    marginLeft: 8,
+  },
+  documentDescription: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+    marginBottom: 8,
+    lineHeight: 18,
+  },
+  documentSpecs: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.6)',
+  },
+  // Bank statements specific styles
+  bankStatementsContainer: {
+    padding: 20,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  bankFileCard: {
+    width: width > 600 ? '30%' : '100%',
+    backgroundColor: '#334155',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: '#475569',
+    borderStyle: 'dashed',
   },
-  singleDocumentCardUploaded: {
-    borderColor: colors.success,
-    backgroundColor: '#f0fff4',
+  bankFileHeader: {
+    alignItems: 'center',
+    marginBottom: 15,
   },
-  singleDocumentContent: {
+  bankFileIcon: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  bankFileName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#e2e8f0',
+  },
+  uploadedFileContainer: {
+    backgroundColor: 'rgba(16,185,129,0.1)',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(16,185,129,0.3)',
     flexDirection: 'row',
     alignItems: 'center',
   },
-  multipleDocumentsContainer: {
-    gap: spacing.md,
+  uploadedFileInfo: {
+    flex: 1,
   },
-  monthUploadCard: {
-    backgroundColor: colors.white,
-    borderRadius: spacing.borderRadius.base,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
+  uploadedFileName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#10b981',
+    marginBottom: 2,
   },
-  monthUploadCardUploaded: {
-    borderColor: colors.success,
-    borderStyle: 'solid',
-    backgroundColor: '#f0fff4',
+  uploadedFileSize: {
+    fontSize: 12,
+    color: '#34d399',
+    marginBottom: 5,
   },
-  monthUploadContent: {
+  uploadProgressBank: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    marginTop: 8,
+  },
+  progressBarSmallBank: {
+    flex: 1,
+    height: 4,
+    backgroundColor: 'rgba(16,185,129,0.3)',
+    borderRadius: 2,
+    marginRight: 8,
+  },
+  progressFillSmallBank: {
+    height: '100%',
+    backgroundColor: '#10b981',
+    borderRadius: 2,
+  },
+  uploadProgressTextBank: {
+    fontSize: 10,
+    color: '#10b981',
+    fontWeight: '600',
+    minWidth: 30,
+  },
+  fileStatusContainerBank: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  fileStatusCompletedBank: {
+    fontSize: 12,
+    color: '#10b981',
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  removeButtonBank: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  replaceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(6,182,212,0.2)',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(6,182,212,0.3)',
+  },
+  replaceButtonText: {
+    fontSize: 14,
+    color: '#67e8f9',
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  bankUploadButton: {
+    backgroundColor: '#0ea5e9',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(14,165,233,0.3)',
+  },
+  uploadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bankUploadButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  // Regular upload styles
+  uploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0ea5e9',
+    padding: 15,
+    marginHorizontal: 20,
+    marginVertical: 15,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(14,165,233,0.3)',
+  },
+  uploadButtonDisabled: {
+    backgroundColor: '#475569',
+    borderColor: '#64748b',
+  },
+  uploadButtonSuccess: {
+    backgroundColor: '#10b981',
+    borderColor: 'rgba(16,185,129,0.3)',
   },
   uploadIcon: {
-    marginRight: spacing.md,
+    marginRight: 8,
   },
-  monthText: {
-    fontSize: typography.fontSize.sm,
-    color: colors.textDark,
-    textAlign: 'center',
+  uploadButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
-  monthTextUploaded: {
-    color: colors.success,
-    fontWeight: typography.fontWeight.medium,
-  },
-  uploadSuccessIndicator: {
+  fileItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
+    backgroundColor: '#334155',
+    padding: 15,
+    marginHorizontal: 20,
+    marginBottom: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#475569',
   },
-  uploadedInfo: {
+  fileIcon: {
+    marginRight: 12,
+  },
+  fileDetails: {
     flex: 1,
-    alignItems: 'center',
   },
-  successPercentage: {
-    fontSize: typography.fontSize.sm,
-    color: colors.success,
-    fontWeight: typography.fontWeight.bold,
+  fileName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#e2e8f0',
+    marginBottom: 2,
+  },
+  fileSize: {
+    fontSize: 12,
+    color: '#94a3b8',
+    marginBottom: 5,
+  },
+  uploadProgress: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   progressBarSmall: {
-    width: '80%',
+    flex: 1,
     height: 4,
-    backgroundColor: colors.progressBackground,
+    backgroundColor: '#475569',
     borderRadius: 2,
-    marginVertical: spacing.xs,
+    marginRight: 8,
   },
   progressFillSmall: {
     height: '100%',
-    backgroundColor: colors.success,
+    backgroundColor: '#06b6d4',
     borderRadius: 2,
   },
-  uploadedFileName: {
-    fontSize: typography.fontSize.xs,
-    color: colors.textLight,
-    marginTop: spacing.xs,
+  uploadProgressText: {
+    fontSize: 10,
+    color: '#67e8f9',
+    fontWeight: '600',
+    minWidth: 30,
   },
-  uploadPlaceholder: {
-    flex: 1,
-    fontSize: typography.fontSize.base,
-    color: colors.textDark,
-    textAlign: 'center',
-  },
-  uploadProgress: {
-    marginTop: spacing.md,
-  },
-  progressBarContainer: {
-    width: '100%',
-    height: 4,
-    backgroundColor: '#e2e8f0',
-    borderRadius: 2,
-    marginBottom: spacing.xs,
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: colors.primary,
-    borderRadius: 2,
-  },
-  progressText: {
-    fontSize: typography.fontSize.sm,
-    color: colors.textDark,
-    textAlign: 'center',
-  },
-  ribSection: {
-    marginTop: spacing.xl,
-    marginBottom: spacing.xl,
-  },
-  ribTitle: {
-    fontSize: typography.fontSize.base,
-    fontWeight: typography.fontWeight.medium,
-    color: colors.white,
-    marginBottom: spacing.md,
-  },
-  ribInputContainer: {
-    position: 'relative',
-  },
-  ribInput: {
-    backgroundColor: colors.white,
-    borderRadius: spacing.borderRadius.base,
-    padding: spacing.lg,
-    fontSize: typography.fontSize.base,
-    color: colors.textDark,
-    textAlign: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  ribInputError: {
-    borderColor: colors.error,
-  },
-  ribValidIcon: {
-    position: 'absolute',
-    right: spacing.md,
-    top: '50%',
-    transform: [{ translateY: -10 }],
-  },
-  ribErrorText: {
-    fontSize: typography.fontSize.sm,
-    color: colors.error,
-    marginTop: spacing.xs,
-    textAlign: 'center',
-  },
-  spacing: {
-    height: spacing.xl,
-  },
-  footer: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
-    backgroundColor: colors.primary,
-  },
-  continueButton: {
-    backgroundColor: colors.buttonPrimary,
-  },
-  continueButtonDisabled: {
-    backgroundColor: colors.buttonDisabled,
-    opacity: 0.6,
-  },
-  imagePickerOptions: {
-    paddingVertical: spacing.md,
-  },
-  optionButton: {
+  fileStatusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.md,
-    borderRadius: spacing.borderRadius.base,
-    marginBottom: spacing.md,
-    backgroundColor: colors.lightGray,
   },
-  optionText: {
-    fontSize: typography.fontSize.base,
-    color: colors.textDark,
-    marginLeft: spacing.md,
+  fileStatusCompleted: {
+    fontSize: 12,
+    color: '#10b981',
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  removeButton: {
+    padding: 8,
+  },
+  // RIB Section
+  ribSection: {
+    backgroundColor: '#1e293b',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  ribTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 15,
+  },
+  ribInput: {
+    backgroundColor: '#334155',
+    borderWidth: 1,
+    borderColor: '#475569',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#fff',
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    letterSpacing: 2,
+  },
+  summarySection: {
+    backgroundColor: '#1e293b',
+    padding: 20,
+    borderRadius: 16,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  summaryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 15,
+  },
+  summaryStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#67e8f9',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#94a3b8',
+    marginTop: 4,
+  },
+  actionContainer: {
+    padding: 20,
+    backgroundColor: '#1e293b',
+    borderTopWidth: 1,
+    borderTopColor: '#334155',
+  },
+  continueButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#10b981',
+    paddingVertical: 15,
+    borderRadius: 25,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(16,185,129,0.3)',
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
+  continueButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  continueButtonDisabled: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#334155',
+    paddingVertical: 15,
+    borderRadius: 25,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#475569',
+  },
+  continueButtonTextDisabled: {
+    color: '#64748b',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  laterButton: {
+    backgroundColor: 'transparent',
+    paddingVertical: 15,
+    borderRadius: 25,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  laterButtonText: {
+    color: '#67e8f9',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

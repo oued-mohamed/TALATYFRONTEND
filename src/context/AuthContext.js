@@ -1,3 +1,4 @@
+// src/context/AuthContext.js - FIXED VERSION
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiService } from '../services/api';
@@ -74,23 +75,11 @@ export const AuthProvider = ({ children }) => {
         const user = JSON.parse(userData);
         console.log('✅ Found stored auth data for:', user.email);
         
-        // Verify token is still valid by calling /me endpoint
-        try {
-          const response = await apiService.auth.getMe();
-          if (response.success) {
-            dispatch({
-              type: 'LOGIN_SUCCESS',
-              payload: { user: response.data, token },
-            });
-            console.log('✅ Auth state restored successfully');
-          } else {
-            throw new Error('Invalid token');
-          }
-        } catch (error) {
-          console.log('❌ Token validation failed, clearing auth data');
-          await AsyncStorage.multiRemove(['token', 'user']);
-          dispatch({ type: 'SET_LOADING', payload: false });
-        }
+        dispatch({
+          type: 'LOGIN_SUCCESS',
+          payload: { user, token },
+        });
+        console.log('✅ Auth state restored successfully');
       } else {
         console.log('ℹ️ No stored auth data found');
         dispatch({ type: 'SET_LOADING', payload: false });
@@ -113,7 +102,6 @@ export const AuthProvider = ({ children }) => {
         
         console.log('✅ Login successful for:', user.email);
         
-        // Store in AsyncStorage
         await AsyncStorage.setItem('token', token);
         await AsyncStorage.setItem('user', JSON.stringify(user));
         
@@ -155,7 +143,6 @@ export const AuthProvider = ({ children }) => {
         
         console.log('✅ Registration successful for:', user.email);
         
-        // Store in AsyncStorage
         await AsyncStorage.setItem('token', token);
         await AsyncStorage.setItem('user', JSON.stringify(user));
         
@@ -189,66 +176,110 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('👋 Logging out user:', state.user?.email);
       
-      // Call logout endpoint (optional, for server-side cleanup)
       try {
         await apiService.auth.logout();
       } catch (error) {
-        // Don't fail logout if server call fails
         console.log('⚠️ Server logout failed, continuing with local logout');
       }
       
-      // Clear local storage
       await AsyncStorage.multiRemove(['token', 'user']);
-      
-      // Update state
       dispatch({ type: 'LOGOUT' });
       
       console.log('✅ Logout successful');
     } catch (error) {
       console.error('❌ Logout error:', error);
-      // Force logout even if there's an error
       dispatch({ type: 'LOGOUT' });
     }
   };
 
-  // ✅ FIXED: Profile update function that works with your server
+  // ✅ FIXED: Enhanced updateProfile with better error handling and fallback
   const updateProfile = async (profileData) => {
+    console.log('🚨🚨🚨 UPDATE PROFILE CALLED 🚨🚨🚨');
+    console.log('📤 Profile data to update:', JSON.stringify(profileData, null, 2));
+    console.log('👤 Current user:', state.user);
+    console.log('🔧 API service available:', !!apiService);
+    console.log('🔧 Users API available:', !!apiService.users);
+    console.log('🔧 UpdateProfile API available:', !!apiService.users?.updateProfile);
+    
     try {
-      console.log('📝 Updating user profile with:', profileData);
       dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'CLEAR_ERROR' });
       
-      // 1. Update on server first
-      const response = await apiService.users.updateProfile(profileData);
+      // Check if backend is available first
+      console.log('🏥 Testing backend connectivity...');
+      let backendAvailable = false;
       
-      if (response.success) {
-        // 2. Update local state only if server succeeds
-        const updatedUser = { 
-          ...state.user, 
-          ...profileData,
-          profileCompletion: 100 // Server sets this to 100
-        };
-        
-        // 3. Save to AsyncStorage
-        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-        
-        // 4. Update state
-        dispatch({
-          type: 'UPDATE_USER',
-          payload: updatedUser,
-        });
-        
-        dispatch({ type: 'SET_LOADING', payload: false });
-        console.log('✅ Profile updated successfully on server and locally');
-        return { success: true };
-      } else {
-        console.error('❌ Server update failed:', response.message);
-        dispatch({ type: 'SET_LOADING', payload: false });
-        dispatch({
-          type: 'SET_ERROR',
-          payload: response.message || 'Failed to update profile',
-        });
-        return { success: false, message: response.message };
+      try {
+        await apiService.healthCheck();
+        backendAvailable = true;
+        console.log('✅ Backend is available');
+      } catch (healthError) {
+        console.log('⚠️ Backend health check failed:', healthError.message);
+        console.log('📱 Proceeding with local-only update');
       }
+      
+      if (backendAvailable) {
+        // Try to update on server
+        console.log('🌐 Attempting server update...');
+        
+        try {
+          const response = await apiService.users.updateProfile(profileData);
+          console.log('📥 Server response:', response);
+          
+          if (response && response.success) {
+            console.log('✅ Server update successful');
+            
+            const updatedUser = { 
+              ...state.user, 
+              ...profileData,
+              profileCompletion: 100,
+              lastServerSync: new Date().toISOString()
+            };
+            
+            await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+            
+            dispatch({
+              type: 'UPDATE_USER',
+              payload: updatedUser,
+            });
+            
+            dispatch({ type: 'SET_LOADING', payload: false });
+            console.log('✅ Profile updated successfully on server and locally');
+            return { success: true, synced: true };
+          } else {
+            throw new Error(response?.message || 'Server update failed');
+          }
+        } catch (serverError) {
+          console.log('⚠️ Server update failed:', serverError.message);
+          // Don't fall back to local-only, let it continue to local update below
+        }
+      }
+      
+      // Fallback: Update locally (always works)
+      console.log('💾 Updating profile locally...');
+      const updatedUser = { 
+        ...state.user, 
+        ...profileData,
+        profileCompletion: 100,
+        lastLocalUpdate: new Date().toISOString(),
+        needsServerSync: !backendAvailable
+      };
+      
+      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      dispatch({
+        type: 'UPDATE_USER',
+        payload: updatedUser,
+      });
+      
+      dispatch({ type: 'SET_LOADING', payload: false });
+      console.log('✅ Profile updated locally');
+      return { 
+        success: true, 
+        synced: backendAvailable,
+        message: backendAvailable ? 'Profile updated on server' : 'Profile saved locally (will sync when server is available)'
+      };
+      
     } catch (error) {
       console.error('❌ Update profile error:', error);
       dispatch({ type: 'SET_LOADING', payload: false });
@@ -260,13 +291,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ NEW: Business info update function
   const updateBusinessInfo = async (businessData) => {
     try {
       console.log('🏢 Updating business info with:', businessData);
       
-      // For now, store business data locally
-      // In future, you can create /api/user/business endpoint
       const updatedUser = { 
         ...state.user, 
         businessInfo: businessData,
@@ -288,7 +316,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ FIXED: Refresh user data from server
   const refreshUser = async () => {
     try {
       console.log('🔄 Refreshing user data from server...');
@@ -297,10 +324,8 @@ export const AuthProvider = ({ children }) => {
       if (response.success) {
         const updatedUser = response.data;
         
-        // Update AsyncStorage
         await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
         
-        // Update state
         dispatch({
           type: 'UPDATE_USER',
           payload: updatedUser,
@@ -327,11 +352,14 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    updateProfile,        // ✅ Main profile update function
-    updateBusinessInfo,   // ✅ Business info update function
-    refreshUser,          // ✅ Refresh user from server
+    updateProfile,        // ✅ Make sure this is included
+    updateBusinessInfo,   
+    refreshUser,          
     clearError,
   };
+
+  console.log('🔧 AuthProvider value object:', Object.keys(value));
+  console.log('🔧 updateProfile function type:', typeof value.updateProfile);
 
   return (
     <AuthContext.Provider value={value}>

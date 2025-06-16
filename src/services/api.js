@@ -9,19 +9,19 @@ const getBaseURL = () => {
     switch (Platform.OS) {
       case 'web':
         // Web browser (Expo web)
-        return 'http://localhost:8080';
+        return 'http://localhost:8082';
         
       case 'ios':
         // iOS Simulator
-        return 'http://localhost:8080';
+        return 'http://localhost:8082';
         
       case 'android':
         // Android Emulator
-        return 'http://10.0.2.2:8080';
+        return 'http://10.0.2.2:8082';
         
       default:
         // Fallback for any other platform
-        return 'http://localhost:8080';
+        return 'http://localhost:8082';
     }
   } else {
     // Production URL
