@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Input from '../../components/common/Input';
@@ -112,6 +113,33 @@ const PhoneVerificationScreen = ({ navigation, route }) => {
     await handleSendCode();
   };
 
+  const handleGoBack = () => {
+    console.log('⬅️ Going back from PhoneVerification...');
+    
+    if (step === 'otp') {
+      // If on OTP step, go back to phone input
+      setStep('phone');
+      setOtpError('');
+    } else {
+      // If on phone step or success, go back to previous screen
+      navigation.goBack();
+    }
+  };
+
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
+        <Text style={styles.backButtonText}>←</Text>
+      </TouchableOpacity>
+      <Text style={styles.headerTitle}>
+        {step === 'phone' ? 'Vérification téléphone' : 
+         step === 'otp' ? 'Code de vérification' : 
+         'Vérification réussie'}
+      </Text>
+      <View style={styles.placeholder} />
+    </View>
+  );
+
   const renderPhoneInput = () => (
     <View style={styles.content}>
       <Text style={styles.title}>Vérifiez votre numéro de téléphone...</Text>
@@ -144,15 +172,17 @@ const PhoneVerificationScreen = ({ navigation, route }) => {
   );
 
   const renderOTPInput = () => (
-    <OTPInput
-      length={6}
-      onComplete={handleVerifyOTP}
-      onResend={handleResendCode}
-      phoneNumber={formatPhoneNumber(phoneNumber)}
-      loading={loading}
-      error={otpError}
-      resendTimer={60}
-    />
+    <View style={styles.content}>
+      <OTPInput
+        length={6}
+        onComplete={handleVerifyOTP}
+        onResend={handleResendCode}
+        phoneNumber={formatPhoneNumber(phoneNumber)}
+        loading={loading}
+        error={otpError}
+        resendTimer={60}
+      />
+    </View>
   );
 
   const renderSuccess = () => (
@@ -176,6 +206,7 @@ const PhoneVerificationScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {renderHeader()}
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -199,6 +230,42 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.primary,
   },
+  
+  // Header styles
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.primary,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    fontSize: 20,
+    color: colors.white,
+    fontWeight: 'bold',
+  },
+  headerTitle: {
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.white,
+    textAlign: 'center',
+  },
+  placeholder: {
+    width: 40,
+  },
+  
   keyboardView: {
     flex: 1,
   },

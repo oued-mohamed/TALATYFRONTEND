@@ -86,7 +86,7 @@ const SupportScreen = ({ navigation }) => {
   };
 
   const handleCallSupport = () => {
-    const phoneNumber = Platform.OS === 'ios' ? 'tel:+33123456789' : 'tel:+33123456789';
+    const phoneNumber = Platform.OS === 'ios' ? 'tel:+212682645795' : 'tel:+212682645795';
     Linking.openURL(phoneNumber);
   };
 
@@ -241,7 +241,7 @@ const SupportScreen = ({ navigation }) => {
               <Icon name="phone" size={20} color="#10b981" />
               <Text style={styles.contactInfoTitle}>Téléphone</Text>
             </View>
-            <Text style={styles.contactInfoText}>+33 1 23 45 67 89</Text>
+            <Text style={styles.contactInfoText}>+212 682 64 57 95</Text>
             <Text style={styles.contactInfoHours}>Lun-Ven: 9h00-18h00</Text>
           </View>
 
@@ -261,7 +261,7 @@ const SupportScreen = ({ navigation }) => {
             </View>
             <Text style={styles.contactInfoText}>
               123 Rue de la Technologie{'\n'}
-              75001 Paris, France
+              75001 Casablanca, Maroc
             </Text>
           </View>
         </View>

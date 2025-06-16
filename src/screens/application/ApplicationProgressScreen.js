@@ -11,6 +11,9 @@ import {
   Alert,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { colors } from '../../styles/colors';
+import { typography } from '../../styles/typography';
+import { spacing } from '../../styles/spacing';
 
 const { width } = Dimensions.get('window');
 
@@ -128,8 +131,8 @@ const ApplicationProgressScreen = ({ navigation, route }) => {
       case 'pending': return '#FF9500';
       case 'approved': return '#34C759';
       case 'rejected': return '#FF3B30';
-      case 'completed': return '#007AFF';
-      default: return '#8E8E93';
+      case 'completed': return colors.secondary;
+      default: return colors.gray;
     }
   };
 
@@ -201,7 +204,7 @@ const ApplicationProgressScreen = ({ navigation, route }) => {
   };
 
   const handleApplicationPress = (application) => {
-    navigation.navigate('ApplicationDetail', { application });
+    navigation.navigate('ApplicationResult', { application });
   };
 
   const handleContactOfficer = (officer) => {
@@ -344,7 +347,12 @@ const ApplicationProgressScreen = ({ navigation, route }) => {
         style={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh}
+            tintColor={colors.white}
+            colors={[colors.secondary]}
+          />
         }
       >
         <Animated.View style={{ transform: [{ translateY: slideAnim }] }}>
@@ -407,100 +415,100 @@ const ApplicationProgressScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.primary,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    backgroundColor: colors.primary,
     paddingTop: 50,
-    paddingBottom: 15,
-    paddingHorizontal: 20,
+    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: 'rgba(255,255,255,0.1)',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backButtonText: {
     fontSize: 20,
-    color: '#333',
+    color: colors.white,
+    fontWeight: 'bold',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.white,
   },
   newApplicationButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.secondary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   newApplicationText: {
     fontSize: 24,
-    color: '#fff',
+    color: colors.white,
     fontWeight: 'bold',
   },
   filtersContainer: {
-    backgroundColor: '#fff',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: 'rgba(255,255,255,0.1)',
   },
   filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderRadius: 20,
-    backgroundColor: '#f8f8f8',
-    marginRight: 10,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginRight: spacing.sm,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   filterButtonActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: colors.secondary,
+    borderColor: colors.secondary,
   },
   filterText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
+    fontSize: typography.fontSize.sm,
+    color: colors.white,
+    opacity: 0.8,
+    fontWeight: typography.fontWeight.medium,
   },
   filterTextActive: {
-    color: '#fff',
-    fontWeight: '600',
+    color: colors.white,
+    fontWeight: typography.fontWeight.semibold,
+    opacity: 1,
   },
   content: {
     flex: 1,
   },
   applicationsContainer: {
-    padding: 15,
+    padding: spacing.md,
   },
   applicationCard: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 12,
-    padding: 20,
-    marginBottom: 15,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 15,
+    marginBottom: spacing.md,
   },
   cardTitleContainer: {
     flexDirection: 'row',
@@ -509,215 +517,231 @@ const styles = StyleSheet.create({
   },
   typeIcon: {
     fontSize: 24,
-    marginRight: 12,
+    marginRight: spacing.md,
   },
   titleInfo: {
     flex: 1,
   },
   applicationTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.white,
     marginBottom: 2,
   },
   applicationId: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: typography.fontSize.xs,
+    color: colors.white,
+    opacity: 0.6,
   },
   statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
     borderRadius: 12,
   },
   statusText: {
-    fontSize: 12,
-    color: '#fff',
-    fontWeight: 'bold',
+    fontSize: typography.fontSize.xs,
+    color: colors.white,
+    fontWeight: typography.fontWeight.bold,
   },
   amountContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    backgroundColor: '#f8f9fa',
+    marginBottom: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   amountLabel: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: typography.fontSize.sm,
+    color: colors.white,
+    opacity: 0.8,
   },
   amountValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#007AFF',
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.secondary,
   },
   progressContainer: {
-    marginBottom: 15,
+    marginBottom: spacing.md,
   },
   progressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   progressLabel: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '600',
+    fontSize: typography.fontSize.sm,
+    color: colors.white,
+    opacity: 0.8,
+    fontWeight: typography.fontWeight.semibold,
   },
   progressPercentage: {
-    fontSize: 14,
-    color: '#333',
-    fontWeight: 'bold',
+    fontSize: typography.fontSize.sm,
+    color: colors.white,
+    fontWeight: typography.fontWeight.bold,
   },
   progressBar: {
     height: 8,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 4,
-    marginBottom: 5,
+    marginBottom: spacing.xs,
   },
   progressFill: {
     height: '100%',
     borderRadius: 4,
   },
   currentStepText: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: typography.fontSize.xs,
+    color: colors.white,
+    opacity: 0.7,
     fontStyle: 'italic',
   },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: spacing.sm,
   },
   dateInfo: {
     flex: 1,
   },
   dateLabel: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: typography.fontSize.xs,
+    color: colors.white,
+    opacity: 0.6,
     marginBottom: 2,
   },
   dateValue: {
-    fontSize: 14,
-    color: '#333',
-    fontWeight: '500',
+    fontSize: typography.fontSize.sm,
+    color: colors.white,
+    fontWeight: typography.fontWeight.medium,
   },
   estimationContainer: {
-    backgroundColor: '#e3f2fd',
-    padding: 10,
+    backgroundColor: 'rgba(0, 122, 255, 0.2)',
+    padding: spacing.sm,
     borderRadius: 6,
-    marginBottom: 10,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 122, 255, 0.3)',
   },
   estimationText: {
-    fontSize: 13,
-    color: '#1976d2',
-    fontWeight: '500',
+    fontSize: typography.fontSize.sm,
+    color: colors.white,
+    fontWeight: typography.fontWeight.medium,
   },
   officerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: spacing.sm,
   },
   officerLabel: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: typography.fontSize.sm,
+    color: colors.white,
+    opacity: 0.8,
   },
   officerButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f8ff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
     borderRadius: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   officerName: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '600',
-    marginRight: 5,
+    fontSize: typography.fontSize.sm,
+    color: colors.secondary,
+    fontWeight: typography.fontWeight.semibold,
+    marginRight: spacing.xs,
   },
   contactIcon: {
     fontSize: 12,
   },
   notesContainer: {
-    backgroundColor: '#fff8f0',
-    padding: 12,
+    backgroundColor: 'rgba(255, 149, 0, 0.2)',
+    padding: spacing.md,
     borderRadius: 8,
     borderLeftWidth: 3,
     borderLeftColor: '#FF9500',
   },
   notesLabel: {
-    fontSize: 12,
-    color: '#cc7a00',
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontSize: typography.fontSize.xs,
+    color: colors.white,
+    fontWeight: typography.fontWeight.bold,
+    marginBottom: spacing.xs,
+    opacity: 0.9,
   },
   notesText: {
-    fontSize: 13,
-    color: '#cc7a00',
+    fontSize: typography.fontSize.sm,
+    color: colors.white,
     lineHeight: 18,
+    opacity: 0.8,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 80,
-    paddingHorizontal: 40,
+    paddingHorizontal: spacing.xl,
   },
   emptyIcon: {
     fontSize: 64,
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
+    fontSize: typography.fontSize.xl,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.white,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: typography.fontSize.base,
+    color: colors.white,
+    opacity: 0.7,
     textAlign: 'center',
     lineHeight: 22,
-    marginBottom: 30,
+    marginBottom: spacing.xl,
   },
   createButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 30,
-    paddingVertical: 15,
+    backgroundColor: colors.secondary,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
     borderRadius: 25,
   },
   createButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: colors.white,
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.bold,
   },
   quickActionsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: 'rgba(255,255,255,0.1)',
   },
   quickActionButton: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: spacing.sm,
   },
   quickActionIcon: {
     fontSize: 20,
-    marginBottom: 5,
+    marginBottom: spacing.xs,
   },
   quickActionText: {
-    fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
+    fontSize: typography.fontSize.xs,
+    color: colors.white,
+    opacity: 0.8,
+    fontWeight: typography.fontWeight.medium,
   },
 });
 

@@ -239,6 +239,7 @@ const CreditApplicationScreen = ({ navigation }) => {
           <TextInput
             style={styles.input}
             placeholder="3000"
+            placeholderTextColor="#8FA8B8"
             value={applicationData.monthlyIncome}
             onChangeText={(text) => updateField('monthlyIncome', text)}
             keyboardType="numeric"
@@ -250,6 +251,7 @@ const CreditApplicationScreen = ({ navigation }) => {
           <TextInput
             style={styles.input}
             placeholder="5"
+            placeholderTextColor="#8FA8B8"
             value={applicationData.workExperience}
             onChangeText={(text) => updateField('workExperience', text)}
             keyboardType="numeric"
@@ -262,6 +264,7 @@ const CreditApplicationScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="Nom de votre entreprise"
+          placeholderTextColor="#8FA8B8"
           value={applicationData.employer}
           onChangeText={(text) => updateField('employer', text)}
         />
@@ -272,6 +275,7 @@ const CreditApplicationScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="Votre fonction"
+          placeholderTextColor="#8FA8B8"
           value={applicationData.position}
           onChangeText={(text) => updateField('position', text)}
         />
@@ -289,6 +293,7 @@ const CreditApplicationScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="50000"
+          placeholderTextColor="#8FA8B8"
           value={applicationData.loanAmount}
           onChangeText={(text) => updateField('loanAmount', text)}
           keyboardType="numeric"
@@ -346,6 +351,7 @@ const CreditApplicationScreen = ({ navigation }) => {
         <TextInput
           style={[styles.input, styles.textArea]}
           placeholder="Décrivez les garanties que vous pouvez offrir (optionnel)"
+          placeholderTextColor="#8FA8B8"
           value={applicationData.collateral}
           onChangeText={(text) => updateField('collateral', text)}
           multiline
@@ -375,6 +381,7 @@ const CreditApplicationScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="Nom de votre banque"
+          placeholderTextColor="#8FA8B8"
           value={applicationData.bankAccount}
           onChangeText={(text) => updateField('bankAccount', text)}
         />
@@ -385,6 +392,7 @@ const CreditApplicationScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="Montant total de vos crédits actuels"
+          placeholderTextColor="#8FA8B8"
           value={applicationData.existingLoans}
           onChangeText={(text) => updateField('existingLoans', text)}
           keyboardType="numeric"
@@ -396,6 +404,7 @@ const CreditApplicationScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="1500"
+          placeholderTextColor="#8FA8B8"
           value={applicationData.monthlyExpenses}
           onChangeText={(text) => updateField('monthlyExpenses', text)}
           keyboardType="numeric"
@@ -514,6 +523,7 @@ const CreditApplicationScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="Nom et téléphone d'un proche"
+          placeholderTextColor="#8FA8B8"
           value={applicationData.personalReference1}
           onChangeText={(text) => updateField('personalReference1', text)}
         />
@@ -524,6 +534,7 @@ const CreditApplicationScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="Nom et téléphone d'un proche"
+          placeholderTextColor="#8FA8B8"
           value={applicationData.personalReference2}
           onChangeText={(text) => updateField('personalReference2', text)}
         />
@@ -534,6 +545,7 @@ const CreditApplicationScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="Nom de votre conseiller bancaire"
+          placeholderTextColor="#8FA8B8"
           value={applicationData.bankReference}
           onChangeText={(text) => updateField('bankReference', text)}
         />
@@ -637,35 +649,52 @@ const CreditApplicationScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#1e3a52', // Main dark blue background
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: '#2c4e68', // Darker blue for header
     paddingTop: 50,
     paddingBottom: 20,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#3d5b77',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#3d5b77',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
   },
   backButtonText: {
     fontSize: 20,
-    color: '#333',
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FFFFFF',
     flex: 1,
     textAlign: 'center',
   },
@@ -677,11 +706,11 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#5a7b94',
     marginHorizontal: 3,
   },
   progressDotActive: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#4CAF50', // Green for active progress
   },
   content: {
     flex: 1,
@@ -695,12 +724,12 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   stepSubtitle: {
     fontSize: 16,
-    color: '#666',
+    color: '#B0C4DE', // Light blue-gray for subtitles
     marginBottom: 25,
   },
   inputContainer: {
@@ -709,18 +738,27 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#E8F4FD', // Very light blue for labels
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#4A6B85',
     borderRadius: 12,
     paddingHorizontal: 15,
     paddingVertical: 12,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#2C4E68', // Darker blue for input background
+    color: '#FFFFFF', // White text
     minHeight: 50,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.18,
+    shadowRadius: 1.00,
+    elevation: 1,
   },
   textArea: {
     height: 80,
@@ -737,39 +775,57 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#3D5B77',
     marginRight: 10,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: '#4A6B85',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.18,
+    shadowRadius: 1.00,
+    elevation: 1,
   },
   optionButtonActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: '#4CAF50', // Green for active state
+    borderColor: '#45A049',
   },
   optionText: {
     fontSize: 14,
-    color: '#666',
+    color: '#B0C4DE',
   },
   optionTextActive: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: '600',
   },
   calculatorContainer: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#2C4E68',
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#4A6B85',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.23,
+    shadowRadius: 2.62,
+    elevation: 4,
   },
   calculatorTitle: {
     fontSize: 14,
-    color: '#666',
+    color: '#B0C4DE',
     marginBottom: 5,
   },
   calculatorAmount: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: '#4CAF50', // Green for amounts
   },
   creditHistoryContainer: {
     flexDirection: 'row',
@@ -779,41 +835,59 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#3D5B77',
     marginRight: 10,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: '#4A6B85',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.18,
+    shadowRadius: 1.00,
+    elevation: 1,
   },
   creditButtonActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: '#4CAF50',
+    borderColor: '#45A049',
   },
   creditText: {
     fontSize: 14,
-    color: '#666',
+    color: '#B0C4DE',
   },
   creditTextActive: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: '600',
   },
   ratioContainer: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#2C4E68',
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#4A6B85',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.23,
+    shadowRadius: 2.62,
+    elevation: 4,
   },
   ratioTitle: {
     fontSize: 14,
-    color: '#666',
+    color: '#B0C4DE',
   },
   ratioValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#34C759',
+    color: '#4CAF50',
   },
   documentsContainer: {
     marginBottom: 20,
@@ -821,29 +895,38 @@ const styles = StyleSheet.create({
   documentItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#2C4E68',
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: '#4A6B85',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.23,
+    shadowRadius: 2.62,
+    elevation: 4,
   },
   checkbox: {
     width: 24,
     height: 24,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: '#5A7B94',
     marginRight: 15,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#3D5B77',
   },
   checkboxActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: '#4CAF50',
+    borderColor: '#45A049',
   },
   checkmark: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -853,20 +936,20 @@ const styles = StyleSheet.create({
   documentTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#FFFFFF',
     marginBottom: 2,
   },
   documentDescription: {
     fontSize: 14,
-    color: '#666',
+    color: '#B0C4DE',
   },
   noteContainer: {
     flexDirection: 'row',
-    backgroundColor: '#e3f2fd',
+    backgroundColor: '#1A3B5C', // Darker blue for note
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#bbdefb',
+    borderColor: '#2E5A7D',
   },
   noteIcon: {
     fontSize: 16,
@@ -875,18 +958,28 @@ const styles = StyleSheet.create({
   noteText: {
     flex: 1,
     fontSize: 14,
-    color: '#1976d2',
+    color: '#87CEEB', // Sky blue for note text
   },
   summaryContainer: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#2C4E68',
     padding: 20,
     borderRadius: 12,
     marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#4A6B85',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   summaryTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FFFFFF',
     marginBottom: 15,
   },
   summaryItem: {
@@ -895,16 +988,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#4A6B85',
   },
   summaryLabel: {
     fontSize: 14,
-    color: '#666',
+    color: '#B0C4DE',
     fontWeight: '600',
   },
   summaryValue: {
     fontSize: 14,
-    color: '#333',
+    color: '#FFFFFF',
     fontWeight: 'bold',
   },
   navigationContainer: {
@@ -912,42 +1005,59 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#2C4E68',
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: '#4A6B85',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   navButton: {
     paddingVertical: 12,
     paddingHorizontal: 25,
     borderRadius: 25,
     minWidth: 80,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   backNavButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#5A7B94',
   },
   nextButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#4CAF50', // Green for next/submit button
   },
   navButtonText: {
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
-    color: '#666',
+    color: '#B0C4DE',
   },
   nextButtonText: {
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
-    color: '#fff',
+    color: '#FFFFFF',
   },
   disabledText: {
     opacity: 0.5,
   },
   stepCounter: {
     fontSize: 14,
-    color: '#666',
+    color: '#B0C4DE',
+    fontWeight: '500',
   },
 });
 

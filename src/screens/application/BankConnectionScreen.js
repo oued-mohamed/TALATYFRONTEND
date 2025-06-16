@@ -12,6 +12,9 @@ import {
   Image,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { colors } from '../../styles/colors';
+import { typography } from '../../styles/typography';
+import { spacing } from '../../styles/spacing';
 
 const { width } = Dimensions.get('window');
 
@@ -173,7 +176,7 @@ const BankConnectionScreen = ({ navigation }) => {
         [
           {
             text: 'Voir mes comptes',
-            onPress: () => navigation.navigate('ConnectedAccounts'),
+            onPress: () => navigation.navigate('FinancialAnalysis'),
           },
           {
             text: 'Continuer',
@@ -197,11 +200,11 @@ const BankConnectionScreen = ({ navigation }) => {
   };
 
   const handleManualConnection = () => {
-    navigation.navigate('ManualBankEntry');
+    Alert.alert('Saisie manuelle', 'Cette fonctionnalité sera bientôt disponible.');
   };
 
   const handleDocumentUpload = () => {
-    navigation.navigate('BankDocumentUpload');
+    Alert.alert('Upload de documents', 'Cette fonctionnalité sera bientôt disponible.');
   };
 
   const handleDisconnectAccount = (accountId) => {
@@ -295,6 +298,7 @@ const BankConnectionScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="Votre identifiant bancaire"
+          placeholderTextColor={colors.gray}
           value={bankCredentials.username}
           onChangeText={(text) => setBankCredentials(prev => ({ ...prev, username: text }))}
           autoCapitalize="none"
@@ -306,6 +310,7 @@ const BankConnectionScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="Votre mot de passe"
+          placeholderTextColor={colors.gray}
           value={bankCredentials.password}
           onChangeText={(text) => setBankCredentials(prev => ({ ...prev, password: text }))}
           secureTextEntry
@@ -317,6 +322,7 @@ const BankConnectionScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="Si demandé par votre banque"
+          placeholderTextColor={colors.gray}
           value={bankCredentials.customerId}
           onChangeText={(text) => setBankCredentials(prev => ({ ...prev, customerId: text }))}
         />
@@ -451,35 +457,36 @@ const BankConnectionScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.primary,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    backgroundColor: colors.primary,
     paddingTop: 50,
-    paddingBottom: 15,
-    paddingHorizontal: 20,
+    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: 'rgba(255,255,255,0.1)',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backButtonText: {
     fontSize: 20,
-    color: '#333',
+    color: colors.white,
+    fontWeight: 'bold',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.white,
   },
   placeholder: {
     width: 40,
@@ -488,115 +495,130 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   connectedAccountsContainer: {
-    backgroundColor: '#fff',
-    margin: 15,
-    padding: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    margin: spacing.md,
+    padding: spacing.lg,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   accountCard: {
-    backgroundColor: '#f8f9fa',
-    padding: 15,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    padding: spacing.md,
     borderRadius: 8,
-    marginBottom: 10,
+    marginBottom: spacing.sm,
     borderLeftWidth: 4,
-    borderLeftColor: '#007AFF',
+    borderLeftColor: colors.secondary,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   accountHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: spacing.sm,
   },
   accountInfo: {
     flex: 1,
   },
   accountBank: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.white,
     marginBottom: 2,
   },
   accountNumber: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: typography.fontSize.sm,
+    color: colors.white,
+    opacity: 0.8,
     marginBottom: 2,
   },
   accountType: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: typography.fontSize.xs,
+    color: colors.white,
+    opacity: 0.6,
   },
   accountBalance: {
     alignItems: 'flex-end',
   },
   balanceAmount: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#007AFF',
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.secondary,
     marginBottom: 2,
   },
   lastSync: {
-    fontSize: 11,
-    color: '#999',
+    fontSize: typography.fontSize.xs,
+    color: colors.white,
+    opacity: 0.6,
   },
   accountActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   syncButton: {
-    backgroundColor: '#e3f2fd',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
+    backgroundColor: 'rgba(0, 122, 255, 0.2)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
     borderRadius: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 122, 255, 0.3)',
   },
   syncButtonText: {
-    fontSize: 12,
-    color: '#1976d2',
-    fontWeight: '600',
+    fontSize: typography.fontSize.xs,
+    color: colors.white,
+    fontWeight: typography.fontWeight.semibold,
   },
   disconnectButton: {
-    backgroundColor: '#ffebee',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
+    backgroundColor: 'rgba(255, 59, 48, 0.2)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
     borderRadius: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 59, 48, 0.3)',
   },
   disconnectButtonText: {
-    fontSize: 12,
-    color: '#d32f2f',
-    fontWeight: '600',
+    fontSize: typography.fontSize.xs,
+    color: colors.white,
+    fontWeight: typography.fontWeight.semibold,
   },
   methodsContainer: {
-    backgroundColor: '#fff',
-    margin: 15,
-    padding: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    margin: spacing.md,
+    padding: spacing.lg,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 20,
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.white,
+    marginBottom: spacing.lg,
   },
   methodCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
+    padding: spacing.md,
     borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#f0f0f0',
-    marginBottom: 15,
-    backgroundColor: '#fafafa',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    marginBottom: spacing.md,
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   methodCardActive: {
-    borderColor: '#007AFF',
-    backgroundColor: '#f0f8ff',
+    borderColor: colors.secondary,
+    backgroundColor: 'rgba(255,255,255,0.15)',
   },
   methodIcon: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   methodEmoji: {
     fontSize: 24,
@@ -607,33 +629,35 @@ const styles = StyleSheet.create({
   methodHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: spacing.xs,
   },
   methodTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginRight: 10,
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.white,
+    marginRight: spacing.sm,
   },
   recommendedBadge: {
     backgroundColor: '#34C759',
-    paddingHorizontal: 8,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: 10,
   },
   recommendedText: {
-    fontSize: 10,
-    color: '#fff',
-    fontWeight: 'bold',
+    fontSize: typography.fontSize.xs,
+    color: colors.white,
+    fontWeight: typography.fontWeight.bold,
   },
   methodSubtitle: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: typography.fontSize.sm,
+    color: colors.white,
+    opacity: 0.8,
     marginBottom: 3,
   },
   methodDescription: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: typography.fontSize.xs,
+    color: colors.white,
+    opacity: 0.6,
   },
   methodArrow: {
     width: 30,
@@ -642,14 +666,17 @@ const styles = StyleSheet.create({
   },
   arrowText: {
     fontSize: 18,
-    color: '#ccc',
+    color: colors.white,
+    opacity: 0.5,
   },
   bankSelectionContainer: {
-    backgroundColor: '#fff',
-    margin: 15,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    margin: spacing.md,
     marginTop: 0,
-    padding: 20,
+    padding: spacing.lg,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   banksGrid: {
     flexDirection: 'row',
@@ -659,130 +686,140 @@ const styles = StyleSheet.create({
   bankCard: {
     width: '30%',
     aspectRatio: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
-    borderWidth: 2,
-    borderColor: '#f0f0f0',
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   bankCardActive: {
-    borderColor: '#007AFF',
-    backgroundColor: '#f0f8ff',
+    borderColor: colors.secondary,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   bankLogo: {
     fontSize: 24,
-    marginBottom: 5,
+    marginBottom: spacing.xs,
   },
   bankName: {
-    fontSize: 10,
-    color: '#333',
+    fontSize: typography.fontSize.xs,
+    color: colors.white,
     textAlign: 'center',
-    fontWeight: '500',
+    fontWeight: typography.fontWeight.medium,
   },
   credentialsContainer: {
-    backgroundColor: '#fff',
-    margin: 15,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    margin: spacing.md,
     marginTop: 0,
-    padding: 20,
+    padding: spacing.lg,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   securityNotice: {
     flexDirection: 'row',
-    backgroundColor: '#e8f5e8',
-    padding: 15,
+    backgroundColor: 'rgba(52, 199, 89, 0.2)',
+    padding: spacing.md,
     borderRadius: 8,
-    marginBottom: 20,
+    marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: '#c8e6c9',
+    borderColor: 'rgba(52, 199, 89, 0.3)',
   },
   securityIcon: {
     fontSize: 16,
-    marginRight: 10,
+    marginRight: spacing.sm,
   },
   securityText: {
     flex: 1,
-    fontSize: 14,
-    color: '#2e7d32',
+    fontSize: typography.fontSize.sm,
+    color: colors.white,
     lineHeight: 20,
+    opacity: 0.9,
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.white,
+    marginBottom: spacing.sm,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: 'rgba(255,255,255,0.3)',
     borderRadius: 12,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    fontSize: typography.fontSize.base,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    color: colors.white,
   },
   connectButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 15,
+    backgroundColor: colors.secondary,
+    paddingVertical: spacing.md,
     borderRadius: 25,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: spacing.sm,
   },
   connectButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: colors.gray,
+    opacity: 0.6,
   },
   connectButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    color: colors.white,
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.bold,
   },
   benefitsContainer: {
-    backgroundColor: '#fff',
-    margin: 15,
-    padding: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    margin: spacing.md,
+    padding: spacing.lg,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   benefitsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.white,
+    marginBottom: spacing.md,
   },
   benefitItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   benefitIcon: {
     fontSize: 20,
-    marginRight: 12,
+    marginRight: spacing.md,
   },
   benefitText: {
     flex: 1,
-    fontSize: 14,
-    color: '#333',
+    fontSize: typography.fontSize.sm,
+    color: colors.white,
+    opacity: 0.9,
   },
   securityContainer: {
-    backgroundColor: '#f8f9fa',
-    margin: 15,
-    padding: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    margin: spacing.md,
+    padding: spacing.lg,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: 'rgba(255,255,255,0.2)',
+    marginBottom: spacing.xl,
   },
   securityTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.white,
+    marginBottom: spacing.sm,
   },
   securityDescription: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: typography.fontSize.sm,
+    color: colors.white,
+    opacity: 0.8,
     lineHeight: 20,
   },
 });

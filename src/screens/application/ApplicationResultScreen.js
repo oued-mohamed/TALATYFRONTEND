@@ -9,6 +9,7 @@ import {
   Animated,
   Alert,
   Share,
+  LinearGradient,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 
@@ -110,11 +111,11 @@ const ApplicationResultScreen = ({ navigation, route }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'approved': return '#34C759';
-      case 'rejected': return '#FF3B30';
-      case 'pending': return '#FF9500';
-      case 'conditional': return '#FF9500';
-      default: return '#8E8E93';
+      case 'approved': return '#4CAF50';
+      case 'rejected': return '#F44336';
+      case 'pending': return '#FF9800';
+      case 'conditional': return '#FF9800';
+      default: return '#607D8B';
     }
   };
 
@@ -360,20 +361,22 @@ const ApplicationResultScreen = ({ navigation, route }) => {
   }
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Résultat de demande</Text>
-        <TouchableOpacity style={styles.shareButton} onPress={handleShareResult}>
-          <Text style={styles.shareButtonText}>↗</Text>
-        </TouchableOpacity>
+    <View style={styles.container}>
+      {/* Header with gradient */}
+      <View style={styles.headerGradient}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backButtonText}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Résultat de demande</Text>
+          <TouchableOpacity style={styles.shareButton} onPress={handleShareResult}>
+            <Text style={styles.shareButtonText}>↗</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Animated.View style={{ transform: [{ translateY: slideAnim }] }}>
+        <Animated.View style={{ transform: [{ translateY: slideAnim }], opacity: fadeAnim }}>
           {renderResultHeader()}
           {renderDecisionDetails()}
           
@@ -422,80 +425,85 @@ const ApplicationResultScreen = ({ navigation, route }) => {
           </>
         )}
       </View>
-    </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#1a365d',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#1a365d',
   },
   loadingText: {
     fontSize: 16,
-    color: '#666',
+    color: '#90cdf4',
+  },
+  headerGradient: {
+    background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 50%, #1e3a8a 100%)',
+    backgroundColor: '#1e40af', // Fallback for React Native
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
     paddingTop: 50,
-    paddingBottom: 15,
+    paddingBottom: 20,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backButtonText: {
     fontSize: 20,
-    color: '#333',
+    color: '#ffffff',
+    fontWeight: 'bold',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#ffffff',
   },
   shareButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#007AFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   shareButtonText: {
     fontSize: 18,
-    color: '#fff',
+    color: '#ffffff',
     fontWeight: 'bold',
   },
   content: {
     flex: 1,
+    backgroundColor: '#f1f5f9',
   },
   resultHeader: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     margin: 15,
     padding: 30,
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    elevation: 4,
+    shadowColor: '#1e40af',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    borderTopWidth: 4,
+    borderTopColor: '#2563eb',
   },
   statusIconContainer: {
     width: 80,
@@ -504,6 +512,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   statusIcon: {
     fontSize: 36,
@@ -511,65 +524,80 @@ const styles = StyleSheet.create({
   statusTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#1e293b',
     marginBottom: 10,
     textAlign: 'center',
   },
   statusMessage: {
     fontSize: 16,
-    color: '#666',
+    color: '#475569',
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 20,
   },
   applicationInfo: {
     alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   applicationId: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: '#2563eb',
     marginBottom: 5,
   },
   processedDate: {
     fontSize: 14,
-    color: '#999',
+    color: '#64748b',
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     marginHorizontal: 15,
     marginBottom: 15,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 20,
+    elevation: 2,
+    shadowColor: '#1e40af',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    borderLeftWidth: 4,
+    borderLeftColor: '#3b82f6',
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#1e293b',
     marginBottom: 15,
   },
   sectionSubtitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#374151',
     marginTop: 20,
     marginBottom: 10,
   },
   offerDetails: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
+    backgroundColor: '#f0f9ff',
+    borderRadius: 12,
     padding: 15,
+    borderWidth: 1,
+    borderColor: '#e0f2fe',
   },
   offerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#e2e8f0',
   },
   highlightRow: {
-    backgroundColor: '#e3f2fd',
+    backgroundColor: '#2563eb',
     marginHorizontal: -15,
     paddingHorizontal: 15,
     borderBottomWidth: 0,
@@ -578,128 +606,137 @@ const styles = StyleSheet.create({
   },
   offerLabel: {
     fontSize: 16,
-    color: '#666',
+    color: '#475569',
   },
   offerValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#1e293b',
   },
   highlightValue: {
     fontSize: 18,
-    color: '#007AFF',
+    color: '#ffffff',
+    fontWeight: 'bold',
   },
   conditionsList: {
-    backgroundColor: '#fff8f0',
+    backgroundColor: '#fef3c7',
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#FF9500',
+    borderLeftColor: '#f59e0b',
   },
   conditionItem: {
     fontSize: 14,
-    color: '#cc7a00',
+    color: '#92400e',
     marginBottom: 5,
     lineHeight: 20,
   },
   rejectionReasons: {
-    backgroundColor: '#ffebee',
+    backgroundColor: '#fef2f2',
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#FF3B30',
+    borderLeftColor: '#ef4444',
     marginBottom: 20,
   },
   rejectionReason: {
     fontSize: 14,
-    color: '#d32f2f',
+    color: '#dc2626',
     marginBottom: 5,
     lineHeight: 20,
   },
   alternativeCard: {
-    backgroundColor: '#f0f8ff',
+    backgroundColor: '#eff6ff',
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#bbdefb',
+    borderColor: '#bfdbfe',
   },
   alternativeTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1976d2',
+    color: '#1d4ed8',
     marginBottom: 5,
   },
   alternativeDescription: {
     fontSize: 14,
-    color: '#1976d2',
+    color: '#3730a3',
     lineHeight: 18,
   },
   stepItem: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 15,
+    backgroundColor: '#f8fafc',
+    padding: 12,
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#3b82f6',
   },
   stepNumber: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#007AFF',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#2563eb',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
   },
   stepNumberText: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: 14,
     fontWeight: 'bold',
   },
   stepText: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: '#374151',
     lineHeight: 22,
   },
   timelineItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 15,
+    paddingLeft: 8,
   },
   timelineDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#cbd5e1',
     marginRight: 15,
     marginTop: 5,
   },
   timelineDotCompleted: {
-    backgroundColor: '#34C759',
+    backgroundColor: '#10b981',
   },
   timelineContent: {
     flex: 1,
   },
   timelineEvent: {
     fontSize: 16,
-    color: '#666',
+    color: '#64748b',
     marginBottom: 2,
   },
   timelineEventCompleted: {
-    color: '#333',
+    color: '#1e293b',
     fontWeight: '600',
   },
   timelineDate: {
     fontSize: 12,
-    color: '#999',
+    color: '#94a3b8',
   },
   documentItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f1f5f9',
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   documentInfo: {
     flexDirection: 'row',
@@ -712,37 +749,41 @@ const styles = StyleSheet.create({
   },
   documentName: {
     fontSize: 16,
-    color: '#333',
+    color: '#374151',
     flex: 1,
+    fontWeight: '500',
   },
   documentActions: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   statusBadge: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
     marginRight: 10,
   },
   readyBadge: {
-    backgroundColor: '#e8f5e8',
+    backgroundColor: '#dcfce7',
   },
   statusBadgeText: {
     fontSize: 12,
-    color: '#2e7d32',
+    color: '#166534',
     fontWeight: 'bold',
   },
   downloadIcon: {
     fontSize: 16,
+    color: '#3b82f6',
   },
   officerCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    padding: 15,
-    borderRadius: 8,
+    backgroundColor: '#f0f9ff',
+    padding: 18,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#bae6fd',
   },
   officerInfo: {
     flexDirection: 'row',
@@ -750,7 +791,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   officerIcon: {
-    fontSize: 24,
+    fontSize: 28,
     marginRight: 15,
   },
   officerDetails: {
@@ -759,39 +800,47 @@ const styles = StyleSheet.create({
   officerName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#1e293b',
     marginBottom: 2,
   },
   officerRole: {
     fontSize: 14,
-    color: '#666',
+    color: '#0c4a6e',
     marginBottom: 2,
+    fontWeight: '500',
   },
   officerContact: {
     fontSize: 12,
-    color: '#007AFF',
+    color: '#2563eb',
+    fontWeight: '500',
   },
   contactArrow: {
     fontSize: 20,
   },
   actionContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    paddingVertical: 15,
+    background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
+    backgroundColor: '#1e40af', // Fallback
+    paddingVertical: 20,
     paddingHorizontal: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   primaryButton: {
     flex: 1,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#ffffff',
     paddingVertical: 15,
     borderRadius: 25,
     alignItems: 'center',
     marginRight: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   primaryButtonText: {
-    color: '#fff',
+    color: '#1e40af',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -801,11 +850,11 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 25,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#007AFF',
+    borderWidth: 2,
+    borderColor: '#ffffff',
   },
   secondaryButtonText: {
-    color: '#007AFF',
+    color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
   },
